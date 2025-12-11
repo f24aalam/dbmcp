@@ -41,6 +41,27 @@ func SaveCredential(
 	return id, nil
 }
 
+func GetCredentialById(id string) (string, string, error) {
+	creds, err := ListCredentials()
+	if err != nil {
+		return "", "", fmt.Errorf("Error fetching credentials: %w", err)
+	}
+
+	for _, cred := range creds {
+		if cred.ID == id {
+			connUrl, err := keyring.Get("mcp-db-connections", id)
+
+			if err != nil {
+				return "", "", fmt.Errorf("Error while getting connection URL: %w", err)
+			}
+
+			return cred.Database, connUrl, nil
+		}
+	}
+
+	return "", "", fmt.Errorf("Connection with id %s not found", id)
+}
+
 func ListCredentials() ([]Credential, error) {
 	data, err := os.ReadFile("credentials.json")
 	if err != nil {

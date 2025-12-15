@@ -111,3 +111,17 @@ func appendToFile(cred Credential) error {
 
 	return os.WriteFile("credentials.json", data, 0644)
 }
+
+func DeleteCredential(id string) error {
+	creds, _ := ListCredentials()
+
+	for i, cred := range creds {
+		if cred.ID == id {
+			creds = append(creds[:i], creds[i+1:]...)
+			break
+		}
+	}
+
+	data, _ := json.MarshalIndent(creds, "", " ")
+	return os.WriteFile("credentials.json", data, 0644)
+}

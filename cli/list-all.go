@@ -14,7 +14,7 @@ import (
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
 type model struct {
-	list list.Model
+	list     list.Model
 	selected *storage.Credential
 }
 
@@ -24,22 +24,22 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-		case tea.KeyMsg:
-			switch msg.String() {
-				case "ctr+c":
-					return m, tea.Quit
-				case "enter":
-					selected := m.list.SelectedItem()
-					if selected != nil {
-						cred := selected.(storage.Credential)
-						m.selected = &cred
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctr+c":
+			return m, tea.Quit
+		case "enter":
+			selected := m.list.SelectedItem()
+			if selected != nil {
+				cred := selected.(storage.Credential)
+				m.selected = &cred
 
-						return m, tea.Quit
-					}
+				return m, tea.Quit
 			}
-		case tea.WindowSizeMsg:
-			h, v := docStyle.GetFrameSize()
-			m.list.SetSize(msg.Width - h, msg.Height - v)
+		}
+	case tea.WindowSizeMsg:
+		h, v := docStyle.GetFrameSize()
+		m.list.SetSize(msg.Width-h, msg.Height-v)
 	}
 
 	var cmd tea.Cmd
@@ -91,7 +91,6 @@ func ShowOptions(cred *storage.Credential) {
 				Options(
 					huh.NewOption("Edit", "edit"),
 					huh.NewOption("Delete", "delete"),
-					huh.NewOption("Connect", "connect"),
 				).
 				Value(&option),
 		),
@@ -106,5 +105,9 @@ func ShowOptions(cred *storage.Credential) {
 	switch option {
 	case "edit":
 		AddNewConnection(cred)
+		ListAllConnections()
+	case "delete":
+		storage.DeleteCredential(cred.ID)
+		ListAllConnections()
 	}
 }

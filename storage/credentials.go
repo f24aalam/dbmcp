@@ -15,12 +15,31 @@ type Credential struct {
 	Name string `json:"name"`
 }
 
+func (c Credential) FilterValue() string {
+	return c.Name
+}
+
+func (c Credential) Title() string {
+	return c.Name
+}
+
+func (c Credential) Description() string {
+	return c.ID
+}
+
 func SaveCredential(
+	dbId *string,
 	dbName string,
 	dbType string,
 	dbConnUrl string,
 ) (string, error) {
-	id := fmt.Sprintf("%s-%d", dbType, time.Now().Unix())
+	var id string
+
+	if dbId != nil {
+		id = *dbId
+	} else {
+		id = fmt.Sprintf("%s-%d", dbType, time.Now().Unix())
+	}
 
 	err := keyring.Set("mcp-db-connections", id, dbConnUrl)
 	if err != nil {
@@ -76,8 +95,19 @@ func ListCredentials() ([]Credential, error) {
 
 func appendToFile(cred Credential) error {
 	creds, _ := ListCredentials()
-	creds = append(creds, cred)
 
+	for i, c := range creds {
+		if c.ID == cred.ID {
+			creds[i] = cred
+			data, _ := json.MarshalIndent(creds, "", " ")
+
+			return os.WriteFile("credentials.json", data, 0644)
+		}
+	}
+
+	// Apend new
+	creds = append(creds, cred)
 	data, _ := json.MarshalIndent(creds, "", " ")
+
 	return os.WriteFile("credentials.json", data, 0644)
 }

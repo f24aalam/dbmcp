@@ -3,10 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
-	"github.com/charmbracelet/huh"
-	"github.com/f24aalam/godbmcp/database"
-	"github.com/f24aalam/godbmcp/storage"
+	"github.com/f24aalam/godbmcp/cli"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -42,49 +41,17 @@ func startServer() {
 }
 
 func main() {
-	var dbName string
-	var dbType string
-	var dbConnUrl string
+	if len(os.Args) < 2 {
+		fmt.Println("Usage: dbmcp <command>")
+		fmt.Println("Commands: add-new, list")
 
-	form := huh.NewForm(
-		huh.NewGroup(
-			huh.NewInput().
-				Title("Connection Name").
-				Value(&dbName),
-			huh.NewSelect[string]().
-				Title("Select Database").
-				Options(
-					huh.NewOption("MySQL", "mysql"),
-				).
-				Value(&dbType),
-			huh.NewInput().
-				Title("Enter connection string").
-				Value(&dbConnUrl),
-		),
-	)
-
-	err := form.Run()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	conn := database.Connection{
-		Database: dbType,
-		ConnectionUrl: dbConnUrl,
-	}
-
-	err = conn.Open()
-	if err != nil {
-		fmt.Println("Error: ", err)
 		return
 	}
 
-	id, err := storage.SaveCredential(dbName, dbType, dbConnUrl)
-	if err != nil {
-		fmt.Println("Error in saving connection: ", err)
+	switch os.Args[1] {
+	case "add-new":
+		cli.AddNewConnection(nil)
+	case "list":
+		cli.ListAllConnections()
 	}
-
-	fmt.Println("Database connection success, saved with id: ", id)
-
-	defer conn.Close()
 }

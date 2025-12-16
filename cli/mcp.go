@@ -21,6 +21,11 @@ func StartServer() {
 		Description: "Get list of all tables in the database",
 	}, dbmcp.GetTables)
 
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "describe_table",
+		Description: "Get detailed information about a table including columns, types and primary key",
+	}, dbmcp.DescribeTable)
+
 	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
 		fmt.Println(err)
 	}

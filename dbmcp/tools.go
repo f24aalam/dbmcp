@@ -12,6 +12,11 @@ type ConnectionInput struct {
 	ConnectionID string `json:"connection_id" jsonschema:"the connection id to connect with the database"`
 }
 
+type TableInput struct {
+	ConnectionID string `json:"connection_id" jsonschema:"the connection id to connect with the database"`
+	TableName    string `json:"table_name" jsonschema:"the table name"`
+}
+
 type GetDatabaseInfoOutput struct {
 	DatabaseName     string `json:"database_name"`
 	DatabaseVendor   string `json:"database_vendor"`
@@ -106,5 +111,72 @@ func GetTables(ctx context.Context, req *mcp.CallToolRequest, input ConnectionIn
 	return nil, GetTablesOutput{
 		Tables:     tables,
 		TableCount: len(tables),
+	}, nil
+}
+
+type Column struct {
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Nullable bool   `json:"nullable"`
+	Key      string `json:"key"`
+}
+
+type DescribeTableOutput struct {
+	Columns    []Column `json:"columns"`
+	PrimaryKey string   `json:"primary_key"`
+}
+
+func DescribeTable(ctx context.Context, req *mcp.CallToolRequest, input TableInput) (
+	*mcp.CallToolResult,
+	DescribeTableOutput,
+	error,
+) {
+	dbType, dbUrl, err := storage.GetCredentialById(input.ConnectionID)
+	if err != nil {
+		return nil, DescribeTableOutput{}, err
+	}
+
+	conn := database.Connection{
+		Database:      dbType,
+		ConnectionUrl: dbUrl,
+	}
+
+	err = conn.Open()
+	if err != nil {
+		return nil, DescribeTableOutput{}, err
+	}
+	defer conn.Close()
+
+	rows, err := conn.DB.Query("SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", input.TableName)
+	if err != nil {
+		return nil, DescribeTableOutput{}, err
+	}
+	defer rows.Close()
+
+	var columns []Column
+	var primaryKey string
+
+	for rows.Next() {
+		var name, colType, isNullable, columnKey string
+		err := rows.Scan(&name, &colType, &isNullable, &columnKey)
+		if err != nil {
+			return nil, DescribeTableOutput{}, nil
+		}
+
+		columns = append(columns, Column{
+			Name:     name,
+			Type:     colType,
+			Nullable: isNullable == "YES",
+			Key:      columnKey,
+		})
+
+		if columnKey == "PRI" {
+			primaryKey = name
+		}
+	}
+
+	return nil, DescribeTableOutput{
+		Columns:    columns,
+		PrimaryKey: primaryKey,
 	}, nil
 }

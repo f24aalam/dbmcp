@@ -59,3 +59,52 @@ func GetDatabaseInfo(ctx context.Context, req *mcp.CallToolRequest, input Connec
 		ConnectionStatus: "connected",
 	}, nil
 }
+
+type GetTablesOutput struct {
+	Tables     []string `json:"tables"`
+	TableCount int      `json:"table_count"`
+}
+
+func GetTables(ctx context.Context, req *mcp.CallToolRequest, input ConnectionInput) (
+	*mcp.CallToolResult,
+	GetTablesOutput,
+	error,
+) {
+	dbType, dbUrl, err := storage.GetCredentialById(input.ConnectionID)
+	if err != nil {
+		return nil, GetTablesOutput{}, err
+	}
+
+	conn := &database.Connection{
+		Database:      dbType,
+		ConnectionUrl: dbUrl,
+	}
+
+	err = conn.Open()
+	if err != nil {
+		return nil, GetTablesOutput{}, err
+	}
+	defer conn.Close()
+
+	rows, err := conn.DB.Query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE()")
+	if err != nil {
+		return nil, GetTablesOutput{}, err
+	}
+	defer rows.Close()
+
+	var tables []string
+	for rows.Next() {
+		var tableName string
+		err := rows.Scan(&tableName)
+		if err != nil {
+			return nil, GetTablesOutput{}, err
+		}
+
+		tables = append(tables, tableName)
+	}
+
+	return nil, GetTablesOutput{
+		Tables:     tables,
+		TableCount: len(tables),
+	}, nil
+}

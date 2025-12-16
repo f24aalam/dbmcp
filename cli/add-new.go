@@ -48,7 +48,7 @@ func AddNewConnection(cred *storage.Credential) {
 	}
 
 	conn := database.Connection{
-		Database: dbType,
+		Database:      dbType,
 		ConnectionUrl: dbConnUrl,
 	}
 

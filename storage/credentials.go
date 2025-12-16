@@ -10,9 +10,9 @@ import (
 )
 
 type Credential struct {
-	ID string `json:"id"`
+	ID       string `json:"id"`
 	Database string `json:"database"`
-	Name string `json:"name"`
+	Name     string `json:"name"`
 }
 
 func (c Credential) FilterValue() string {
@@ -47,8 +47,8 @@ func SaveCredential(
 	}
 
 	cred := Credential{
-		ID: id,
-		Name: dbName,
+		ID:       id,
+		Name:     dbName,
 		Database: dbType,
 	}
 

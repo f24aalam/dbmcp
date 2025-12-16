@@ -6,9 +6,9 @@ import (
 )
 
 type Connection struct {
-	Database string
+	Database      string
 	ConnectionUrl string
-	DB *sql.DB
+	DB            *sql.DB
 }
 
 func (c *Connection) Open() error {
@@ -23,12 +23,12 @@ func (c *Connection) Open() error {
 	}
 
 	c.DB = db
-	return nil;
+	return nil
 }
 
 func (c *Connection) Close() error {
 	if c.DB != nil {
-		return c.DB.Close();
+		return c.DB.Close()
 	}
 
 	return nil

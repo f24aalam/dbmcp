@@ -43,7 +43,7 @@ func startServer() {
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: dbmcp <command>")
-		fmt.Println("Commands: add-new, list")
+		fmt.Println("Commands: add-new, list, mcp")
 
 		return
 	}
@@ -53,5 +53,7 @@ func main() {
 		cli.AddNewConnection(nil)
 	case "list":
 		cli.ListAllConnections()
+	case "mcp":
+		cli.StartServer()
 	}
 }

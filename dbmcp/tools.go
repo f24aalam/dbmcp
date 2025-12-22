@@ -17,6 +17,11 @@ type TableInput struct {
 	TableName    string `json:"table_name" jsonschema:"the table name"`
 }
 
+type QueryInput struct {
+	ConnectionID string `json:"connection_id" jsonschema:"the connection id to connect with the database"`
+	Query        string `json:"query" jsonschema:"the query to run"`
+}
+
 type GetDatabaseInfoOutput struct {
 	DatabaseName     string `json:"database_name"`
 	DatabaseVendor   string `json:"database_vendor"`
@@ -178,5 +183,80 @@ func DescribeTable(ctx context.Context, req *mcp.CallToolRequest, input TableInp
 	return nil, DescribeTableOutput{
 		Columns:    columns,
 		PrimaryKey: primaryKey,
+	}, nil
+}
+
+type SelectQueryOutput struct {
+	Rows     []map[string]interface{} `json:"rows"`
+	RowCount int                      `json:"row_count"`
+}
+
+func RunSelectQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput) (
+	*mcp.CallToolResult,
+	SelectQueryOutput,
+	error,
+) {
+	dbType, dbUrl, err := storage.GetCredentialById(input.ConnectionID)
+	if err != nil {
+		return nil, SelectQueryOutput{}, err
+	}
+
+	conn := database.Connection{
+		Database:      dbType,
+		ConnectionUrl: dbUrl,
+	}
+
+	err = conn.Open()
+	if err != nil {
+		return nil, SelectQueryOutput{}, err
+	}
+	defer conn.Close()
+
+	rows, err := conn.DB.Query(input.Query)
+	if err != nil {
+		return nil, SelectQueryOutput{}, err
+	}
+
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, SelectQueryOutput{}, err
+	}
+
+	var result []map[string]interface{}
+	for rows.Next() {
+		values := make([]interface{}, len(columns))
+		valuesPtr := make([]interface{}, len(columns))
+
+		for i := range columns {
+			valuesPtr[i] = &values[i]
+		}
+
+		err = rows.Scan(valuesPtr...)
+		if err != nil {
+			return nil, SelectQueryOutput{}, err
+		}
+
+		entry := make(map[string]interface{})
+		for i, col := range columns {
+			var v interface{}
+
+			val := values[i]
+			b, ok := val.([]byte)
+
+			if ok {
+				v = string(b)
+			} else {
+				v = val
+			}
+
+			entry[col] = v
+		}
+
+		result = append(result, entry)
+	}
+
+	return nil, SelectQueryOutput{
+		Rows:     result,
+		RowCount: len(result),
 	}, nil
 }

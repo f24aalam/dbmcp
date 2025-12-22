@@ -26,6 +26,11 @@ func StartServer() {
 		Description: "Get detailed information about a table including columns, types and primary key",
 	}, dbmcp.DescribeTable)
 
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "run_select_query",
+		Description: "Run a SELECT query to retrieve data from the database",
+	}, dbmcp.RunSelectQuery)
+
 	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
 		fmt.Println(err)
 	}

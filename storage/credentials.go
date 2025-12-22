@@ -4,15 +4,39 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/zalando/go-keyring"
 )
 
+var credentialsPath string
+
 type Credential struct {
 	ID       string `json:"id"`
 	Database string `json:"database"`
 	Name     string `json:"name"`
+}
+
+func init() {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	mpcDir := filepath.Join(home, ".mcp")
+	err = os.MkdirAll(mpcDir, 0700)
+	if err != nil {
+		panic(err)
+	}
+
+	credentialsPath = filepath.Join(mpcDir, "credentials.json")
+
+	if _, err := os.Stat(credentialsPath); os.IsNotExist(err) {
+		emptyCredentials := []Credential{}
+		data, _ := json.MarshalIndent(emptyCredentials, "", " ")
+		os.WriteFile(credentialsPath, data, 0644)
+	}
 }
 
 func (c Credential) FilterValue() string {
@@ -82,7 +106,7 @@ func GetCredentialById(id string) (string, string, error) {
 }
 
 func ListCredentials() ([]Credential, error) {
-	data, err := os.ReadFile("credentials.json")
+	data, err := os.ReadFile(credentialsPath)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +125,7 @@ func appendToFile(cred Credential) error {
 			creds[i] = cred
 			data, _ := json.MarshalIndent(creds, "", " ")
 
-			return os.WriteFile("credentials.json", data, 0644)
+			return os.WriteFile(credentialsPath, data, 0644)
 		}
 	}
 
@@ -109,7 +133,7 @@ func appendToFile(cred Credential) error {
 	creds = append(creds, cred)
 	data, _ := json.MarshalIndent(creds, "", " ")
 
-	return os.WriteFile("credentials.json", data, 0644)
+	return os.WriteFile(credentialsPath, data, 0644)
 }
 
 func DeleteCredential(id string) error {
@@ -123,5 +147,5 @@ func DeleteCredential(id string) error {
 	}
 
 	data, _ := json.MarshalIndent(creds, "", " ")
-	return os.WriteFile("credentials.json", data, 0644)
+	return os.WriteFile(credentialsPath, data, 0644)
 }

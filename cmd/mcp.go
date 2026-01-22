@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/f24aalam/godbmcp/cli"
+	"github.com/f24aalam/godbmcp/app"
 )
 
 // mcpCmd represents the mcp command
@@ -15,7 +15,7 @@ var mcpCmd = &cobra.Command{
 	Short: "Start the mcp server",
 	Long: `Start a MCP server`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cli.StartServer()
+		app.StartServer()
 	},
 }
 

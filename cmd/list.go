@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/f24aalam/godbmcp/cli"
+	"github.com/f24aalam/godbmcp/app"
 )
 
 // listCmd represents the list command
@@ -15,7 +15,7 @@ var listCmd = &cobra.Command{
 	Short: "List all the connections",
 	Long: `List all the connections stored with label and connection id`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cli.ListAllConnections()
+		app.ListAllConnections()
 	},
 }
 

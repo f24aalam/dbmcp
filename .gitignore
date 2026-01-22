@@ -1,6 +1,6 @@
-main.exe
-main
-credentials.json
-godbmcp
-godbmcp.exe
-godbmcp*
+/main.exe
+/main
+/credentials.json
+/godbmcp
+/godbmcp.exe
+/godbmcp.*

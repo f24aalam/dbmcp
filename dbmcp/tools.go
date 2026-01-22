@@ -2,6 +2,8 @@ package dbmcp
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/f24aalam/godbmcp/database"
 	"github.com/f24aalam/godbmcp/storage"
@@ -51,13 +53,13 @@ func GetDatabaseInfo(ctx context.Context, req *mcp.CallToolRequest, input Connec
 	defer conn.Close()
 
 	var dbName string
-	err = conn.DB.QueryRow("SELECT DATABASE()").Scan(&dbName)
+	err = conn.DB.QueryRowContext(ctx, "SELECT DATABASE()").Scan(&dbName)
 	if err != nil {
 		return nil, GetDatabaseInfoOutput{}, err
 	}
 
 	var dbVersion string
-	err = conn.DB.QueryRow("SELECT VERSION()").Scan(&dbVersion)
+	err = conn.DB.QueryRowContext(ctx, "SELECT VERSION()").Scan(&dbVersion)
 	if err != nil {
 		return nil, GetDatabaseInfoOutput{}, err
 	}
@@ -96,7 +98,7 @@ func GetTables(ctx context.Context, req *mcp.CallToolRequest, input ConnectionIn
 	}
 	defer conn.Close()
 
-	rows, err := conn.DB.Query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE()")
+	rows, err := conn.DB.QueryContext(ctx, "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE()")
 	if err != nil {
 		return nil, GetTablesOutput{}, err
 	}
@@ -152,7 +154,7 @@ func DescribeTable(ctx context.Context, req *mcp.CallToolRequest, input TableInp
 	}
 	defer conn.Close()
 
-	rows, err := conn.DB.Query("SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", input.TableName)
+	rows, err := conn.DB.QueryContext(ctx, "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", input.TableName)
 	if err != nil {
 		return nil, DescribeTableOutput{}, err
 	}
@@ -165,7 +167,7 @@ func DescribeTable(ctx context.Context, req *mcp.CallToolRequest, input TableInp
 		var name, colType, isNullable, columnKey string
 		err := rows.Scan(&name, &colType, &isNullable, &columnKey)
 		if err != nil {
-			return nil, DescribeTableOutput{}, nil
+			return nil, DescribeTableOutput{}, err
 		}
 
 		columns = append(columns, Column{
@@ -196,6 +198,11 @@ func RunSelectQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryIn
 	SelectQueryOutput,
 	error,
 ) {
+	query := strings.TrimSpace(strings.ToUpper(input.Query))
+	if !strings.HasPrefix(query, "SELECT") {
+		return nil, SelectQueryOutput{}, fmt.Errorf("only SELECT queries are allowed")
+	}
+
 	dbType, dbUrl, err := storage.GetCredentialById(input.ConnectionID)
 	if err != nil {
 		return nil, SelectQueryOutput{}, err
@@ -212,10 +219,11 @@ func RunSelectQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryIn
 	}
 	defer conn.Close()
 
-	rows, err := conn.DB.Query(input.Query)
+	rows, err := conn.DB.QueryContext(ctx, strings.TrimSpace(input.Query))
 	if err != nil {
 		return nil, SelectQueryOutput{}, err
 	}
+	defer rows.Close()
 
 	columns, err := rows.Columns()
 	if err != nil {

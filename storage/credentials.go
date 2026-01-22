@@ -27,14 +27,21 @@ func init() {
 	mpcDir := filepath.Join(home, ".mcp")
 	err = os.MkdirAll(mpcDir, 0700)
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Storage init error: %v\n", err)
+		os.Exit(1)
 	}
 
 	credentialsPath = filepath.Join(mpcDir, "credentials.json")
 
 	if _, err := os.Stat(credentialsPath); os.IsNotExist(err) {
 		emptyCredentials := []Credential{}
-		data, _ := json.MarshalIndent(emptyCredentials, "", " ")
+		data, err := json.MarshalIndent(emptyCredentials, "", " ")
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Storage init error: %v\n", err)
+			os.Exit(1)
+		}
+
 		os.WriteFile(credentialsPath, data, 0644)
 	}
 }
@@ -55,7 +62,7 @@ func SaveCredential(
 	dbId *string,
 	dbName string,
 	dbType string,
-	dbConnUrl string,
+	dbConnURL string,
 ) (string, error) {
 	var id string
 
@@ -65,7 +72,7 @@ func SaveCredential(
 		id = fmt.Sprintf("%s-%d", dbType, time.Now().Unix())
 	}
 
-	err := keyring.Set("mcp-db-connections", id, dbConnUrl)
+	err := keyring.Set("mcp-db-connections", id, dbConnURL)
 	if err != nil {
 		return "", err
 	}
@@ -118,7 +125,11 @@ func ListCredentials() ([]Credential, error) {
 }
 
 func appendToFile(cred Credential) error {
-	creds, _ := ListCredentials()
+	creds, err := ListCredentials()
+
+	if err != nil {
+		return err
+	}
 
 	for i, c := range creds {
 		if c.ID == cred.ID {
@@ -131,13 +142,21 @@ func appendToFile(cred Credential) error {
 
 	// Apend new
 	creds = append(creds, cred)
-	data, _ := json.MarshalIndent(creds, "", " ")
+	data, err := json.MarshalIndent(creds, "", " ")
+
+	if err != nil {
+		return err
+	}
 
 	return os.WriteFile(credentialsPath, data, 0644)
 }
 
 func DeleteCredential(id string) error {
-	creds, _ := ListCredentials()
+	creds, err := ListCredentials()
+
+	if err != nil {
+		return err
+	}
 
 	for i, cred := range creds {
 		if cred.ID == id {
@@ -146,6 +165,11 @@ func DeleteCredential(id string) error {
 		}
 	}
 
-	data, _ := json.MarshalIndent(creds, "", " ")
+	data, err := json.MarshalIndent(creds, "", " ")
+
+	if err != nil {
+		return err
+	}
+
 	return os.WriteFile(credentialsPath, data, 0644)
 }

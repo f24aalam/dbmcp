@@ -41,7 +41,7 @@ func GetDatabaseInfo(ctx context.Context, req *mcp.CallToolRequest, input Connec
 
 	conn := &database.Connection{
 		Database:      dbType,
-		ConnectionUrl: dbUrl,
+		ConnectionURL: dbUrl,
 	}
 
 	err = conn.Open()
@@ -87,7 +87,7 @@ func GetTables(ctx context.Context, req *mcp.CallToolRequest, input ConnectionIn
 
 	conn := &database.Connection{
 		Database:      dbType,
-		ConnectionUrl: dbUrl,
+		ConnectionURL: dbUrl,
 	}
 
 	err = conn.Open()
@@ -143,7 +143,7 @@ func DescribeTable(ctx context.Context, req *mcp.CallToolRequest, input TableInp
 
 	conn := database.Connection{
 		Database:      dbType,
-		ConnectionUrl: dbUrl,
+		ConnectionURL: dbUrl,
 	}
 
 	err = conn.Open()
@@ -203,7 +203,7 @@ func RunSelectQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryIn
 
 	conn := database.Connection{
 		Database:      dbType,
-		ConnectionUrl: dbUrl,
+		ConnectionURL: dbUrl,
 	}
 
 	err = conn.Open()

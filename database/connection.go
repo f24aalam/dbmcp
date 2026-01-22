@@ -7,18 +7,19 @@ import (
 
 type Connection struct {
 	Database      string
-	ConnectionUrl string
+	ConnectionURL string
 	DB            *sql.DB
 }
 
 func (c *Connection) Open() error {
-	db, err := sql.Open(c.Database, c.ConnectionUrl)
+	db, err := sql.Open(c.Database, c.ConnectionURL)
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
 
 	err = db.Ping()
 	if err != nil {
+		db.Close()
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 

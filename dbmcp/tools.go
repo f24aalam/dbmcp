@@ -12,6 +12,18 @@ import (
 
 var DefaultConnectionID string
 
+func resolveConnectionID(inputID string) (string, error) {
+	if inputID != "" {
+		return inputID, nil
+	}
+
+	if DefaultConnectionID == "" {
+		return "", fmt.Errorf("no default connection configured")
+	}
+
+	return DefaultConnectionID, nil
+}
+
 type ConnectionInput struct {
 	ConnectionID string `json:"connection_id,omitempty" jsonschema:"optional; database connection id. If omitted, the server default connection is used"`
 }
@@ -38,9 +50,9 @@ func GetDatabaseInfo(ctx context.Context, req *mcp.CallToolRequest, input Connec
 	GetDatabaseInfoOutput,
 	error,
 ) {
-	connectionID := input.ConnectionID
-	if connectionID == "" {
-		connectionID = DefaultConnectionID
+	connectionID, err := resolveConnectionID(input.ConnectionID)
+	if err != nil {
+		return nil, GetDatabaseInfoOutput{}, err
 	}
 
 	dbType, dbUrl, err := storage.GetCredentialById(connectionID)
@@ -89,9 +101,9 @@ func GetTables(ctx context.Context, req *mcp.CallToolRequest, input ConnectionIn
 	GetTablesOutput,
 	error,
 ) {
-	connectionID := input.ConnectionID
-	if connectionID == "" {
-		connectionID = DefaultConnectionID
+	connectionID, err := resolveConnectionID(input.ConnectionID)
+	if err != nil {
+		return nil, GetTablesOutput{}, err
 	}
 
 	dbType, dbUrl, err := storage.GetCredentialById(connectionID)
@@ -150,9 +162,9 @@ func DescribeTable(ctx context.Context, req *mcp.CallToolRequest, input TableInp
 	DescribeTableOutput,
 	error,
 ) {
-	connectionID := input.ConnectionID
-	if connectionID == "" {
-		connectionID = DefaultConnectionID
+	connectionID, err := resolveConnectionID(input.ConnectionID)
+	if err != nil {
+		return nil, DescribeTableOutput{}, err
 	}
 
 	dbType, dbUrl, err := storage.GetCredentialById(connectionID)
@@ -215,9 +227,9 @@ func RunSelectQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryIn
 	SelectQueryOutput,
 	error,
 ) {
-	connectionID := input.ConnectionID
-	if connectionID == "" {
-		connectionID = DefaultConnectionID
+	connectionID, err := resolveConnectionID(input.ConnectionID)
+	if err != nil {
+		return nil, SelectQueryOutput{}, err
 	}
 
 	query := strings.TrimSpace(strings.ToUpper(input.Query))

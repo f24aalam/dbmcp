@@ -2,12 +2,19 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/f24aalam/godbmcp/dbmcp"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-func StartServer() error {
+func StartServer(connectionID string) error {
+	if connectionID == "" {
+		return fmt.Errorf("connection-id is required")
+	}
+
+	dbmcp.DefaultConnectionID = connectionID
+
 	server := mcp.NewServer(&mcp.Implementation{Name: "greeter", Version: "v1.0.0"}, nil)
 
 	mcp.AddTool(server, &mcp.Tool{

@@ -10,17 +10,19 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+var DefaultConnectionID string
+
 type ConnectionInput struct {
-	ConnectionID string `json:"connection_id" jsonschema:"the connection id to connect with the database"`
+	ConnectionID string `json:"connection_id,omitempty" jsonschema:"optional; database connection id. If omitted, the server default connection is used"`
 }
 
 type TableInput struct {
-	ConnectionID string `json:"connection_id" jsonschema:"the connection id to connect with the database"`
+	ConnectionID string `json:"connection_id,omitempty" jsonschema:"optional; database connection id. If omitted, the server default connection is used"`
 	TableName    string `json:"table_name" jsonschema:"the table name"`
 }
 
 type QueryInput struct {
-	ConnectionID string `json:"connection_id" jsonschema:"the connection id to connect with the database"`
+	ConnectionID string `json:"connection_id,omitempty" jsonschema:"optional; database connection id. If omitted, the server default connection is used"`
 	Query        string `json:"query" jsonschema:"the query to run"`
 }
 
@@ -36,7 +38,12 @@ func GetDatabaseInfo(ctx context.Context, req *mcp.CallToolRequest, input Connec
 	GetDatabaseInfoOutput,
 	error,
 ) {
-	dbType, dbUrl, err := storage.GetCredentialById(input.ConnectionID)
+	connectionID := input.ConnectionID
+	if connectionID == "" {
+		connectionID = DefaultConnectionID
+	}
+
+	dbType, dbUrl, err := storage.GetCredentialById(connectionID)
 	if err != nil {
 		return nil, GetDatabaseInfoOutput{}, err
 	}
@@ -82,7 +89,12 @@ func GetTables(ctx context.Context, req *mcp.CallToolRequest, input ConnectionIn
 	GetTablesOutput,
 	error,
 ) {
-	dbType, dbUrl, err := storage.GetCredentialById(input.ConnectionID)
+	connectionID := input.ConnectionID
+	if connectionID == "" {
+		connectionID = DefaultConnectionID
+	}
+
+	dbType, dbUrl, err := storage.GetCredentialById(connectionID)
 	if err != nil {
 		return nil, GetTablesOutput{}, err
 	}
@@ -138,7 +150,12 @@ func DescribeTable(ctx context.Context, req *mcp.CallToolRequest, input TableInp
 	DescribeTableOutput,
 	error,
 ) {
-	dbType, dbUrl, err := storage.GetCredentialById(input.ConnectionID)
+	connectionID := input.ConnectionID
+	if connectionID == "" {
+		connectionID = DefaultConnectionID
+	}
+
+	dbType, dbUrl, err := storage.GetCredentialById(connectionID)
 	if err != nil {
 		return nil, DescribeTableOutput{}, err
 	}
@@ -198,12 +215,17 @@ func RunSelectQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryIn
 	SelectQueryOutput,
 	error,
 ) {
+	connectionID := input.ConnectionID
+	if connectionID == "" {
+		connectionID = DefaultConnectionID
+	}
+
 	query := strings.TrimSpace(strings.ToUpper(input.Query))
 	if !strings.HasPrefix(query, "SELECT") {
 		return nil, SelectQueryOutput{}, fmt.Errorf("only SELECT queries are allowed")
 	}
 
-	dbType, dbUrl, err := storage.GetCredentialById(input.ConnectionID)
+	dbType, dbUrl, err := storage.GetCredentialById(connectionID)
 	if err != nil {
 		return nil, SelectQueryOutput{}, err
 	}

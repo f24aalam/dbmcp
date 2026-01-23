@@ -2,13 +2,12 @@ package app
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/f24aalam/godbmcp/dbmcp"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-func StartServer() {
+func StartServer() error {
 	server := mcp.NewServer(&mcp.Implementation{Name: "greeter", Version: "v1.0.0"}, nil)
 
 	mcp.AddTool(server, &mcp.Tool{
@@ -31,7 +30,5 @@ func StartServer() {
 		Description: "Run a SELECT query to retrieve data from the database",
 	}, dbmcp.RunSelectQuery)
 
-	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
-		fmt.Println(err)
-	}
+	return server.Run(context.Background(), &mcp.StdioTransport{})
 }

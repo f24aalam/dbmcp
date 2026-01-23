@@ -1,6 +1,5 @@
 /*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2026 Faizan Aalam <f24aalam@gmail.com>
 */
 package cmd
 
@@ -14,8 +13,8 @@ var mcpCmd = &cobra.Command{
 	Use:   "mcp",
 	Short: "Start the mcp server",
 	Long: `Start a MCP server`,
-	Run: func(cmd *cobra.Command, args []string) {
-		app.StartServer()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return app.StartServer()
 	},
 }
 

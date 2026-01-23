@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/f24aalam/godbmcp/dbmcp"
+	"github.com/f24aalam/godbmcp/storage"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -13,7 +14,12 @@ func StartServer(connectionID string) error {
 		return fmt.Errorf("connection-id is required")
 	}
 
-	dbmcp.DefaultConnectionID = connectionID
+	dbType, dbURL, err := storage.GetCredentialById(connectionID)
+	if err != nil {
+		return err
+	}
+
+	dbmcp.InitDBConfig(dbType, dbURL)
 
 	server := mcp.NewServer(&mcp.Implementation{Name: "greeter", Version: "v1.0.0"}, nil)
 

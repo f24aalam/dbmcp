@@ -4,25 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strings"
-
-	"github.com/f24aalam/godbmcp/database"
-	"github.com/f24aalam/godbmcp/storage"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
-
-var DefaultConnectionID string
-
-func resolveConnectionID(inputID string) (string, error) {
-	if inputID != "" {
-		return inputID, nil
-	}
-
-	if DefaultConnectionID == "" {
-		return "", fmt.Errorf("no default connection configured")
-	}
-
-	return DefaultConnectionID, nil
-}
 
 type ConnectionInput struct {
 	ConnectionID string `json:"connection_id,omitempty" jsonschema:"optional; database connection id. If omitted, the server default connection is used"`
@@ -50,26 +33,10 @@ func GetDatabaseInfo(ctx context.Context, req *mcp.CallToolRequest, input Connec
 	GetDatabaseInfoOutput,
 	error,
 ) {
-	connectionID, err := resolveConnectionID(input.ConnectionID)
+	conn, err := GetDB()
 	if err != nil {
 		return nil, GetDatabaseInfoOutput{}, err
 	}
-
-	dbType, dbUrl, err := storage.GetCredentialById(connectionID)
-	if err != nil {
-		return nil, GetDatabaseInfoOutput{}, err
-	}
-
-	conn := &database.Connection{
-		Database:      dbType,
-		ConnectionURL: dbUrl,
-	}
-
-	err = conn.Open()
-	if err != nil {
-		return nil, GetDatabaseInfoOutput{}, err
-	}
-	defer conn.Close()
 
 	var dbName string
 	err = conn.DB.QueryRowContext(ctx, "SELECT DATABASE()").Scan(&dbName)
@@ -85,7 +52,7 @@ func GetDatabaseInfo(ctx context.Context, req *mcp.CallToolRequest, input Connec
 
 	return nil, GetDatabaseInfoOutput{
 		DatabaseName:     dbName,
-		DatabaseVendor:   dbType,
+		DatabaseVendor:   GetDBType(),
 		DatabaseVersion:  dbVersion,
 		ConnectionStatus: "connected",
 	}, nil
@@ -101,26 +68,10 @@ func GetTables(ctx context.Context, req *mcp.CallToolRequest, input ConnectionIn
 	GetTablesOutput,
 	error,
 ) {
-	connectionID, err := resolveConnectionID(input.ConnectionID)
+	conn, err := GetDB()
 	if err != nil {
 		return nil, GetTablesOutput{}, err
 	}
-
-	dbType, dbUrl, err := storage.GetCredentialById(connectionID)
-	if err != nil {
-		return nil, GetTablesOutput{}, err
-	}
-
-	conn := &database.Connection{
-		Database:      dbType,
-		ConnectionURL: dbUrl,
-	}
-
-	err = conn.Open()
-	if err != nil {
-		return nil, GetTablesOutput{}, err
-	}
-	defer conn.Close()
 
 	rows, err := conn.DB.QueryContext(ctx, "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE()")
 	if err != nil {
@@ -162,26 +113,10 @@ func DescribeTable(ctx context.Context, req *mcp.CallToolRequest, input TableInp
 	DescribeTableOutput,
 	error,
 ) {
-	connectionID, err := resolveConnectionID(input.ConnectionID)
+	conn, err := GetDB()
 	if err != nil {
 		return nil, DescribeTableOutput{}, err
 	}
-
-	dbType, dbUrl, err := storage.GetCredentialById(connectionID)
-	if err != nil {
-		return nil, DescribeTableOutput{}, err
-	}
-
-	conn := database.Connection{
-		Database:      dbType,
-		ConnectionURL: dbUrl,
-	}
-
-	err = conn.Open()
-	if err != nil {
-		return nil, DescribeTableOutput{}, err
-	}
-	defer conn.Close()
 
 	rows, err := conn.DB.QueryContext(ctx, "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", input.TableName)
 	if err != nil {
@@ -227,31 +162,15 @@ func RunSelectQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryIn
 	SelectQueryOutput,
 	error,
 ) {
-	connectionID, err := resolveConnectionID(input.ConnectionID)
-	if err != nil {
-		return nil, SelectQueryOutput{}, err
-	}
-
 	query := strings.TrimSpace(strings.ToUpper(input.Query))
 	if !strings.HasPrefix(query, "SELECT") {
 		return nil, SelectQueryOutput{}, fmt.Errorf("only SELECT queries are allowed")
 	}
 
-	dbType, dbUrl, err := storage.GetCredentialById(connectionID)
+	conn, err := GetDB()
 	if err != nil {
 		return nil, SelectQueryOutput{}, err
 	}
-
-	conn := database.Connection{
-		Database:      dbType,
-		ConnectionURL: dbUrl,
-	}
-
-	err = conn.Open()
-	if err != nil {
-		return nil, SelectQueryOutput{}, err
-	}
-	defer conn.Close()
 
 	rows, err := conn.DB.QueryContext(ctx, strings.TrimSpace(input.Query))
 	if err != nil {

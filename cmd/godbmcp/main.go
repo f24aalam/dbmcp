@@ -7,6 +7,7 @@ package main
 import (
 	"github.com/f24aalam/godbmcp/cmd"
 	_ "github.com/go-sql-driver/mysql"
+	_ "modernc.org/sqlite"
 )
 
 func main() {

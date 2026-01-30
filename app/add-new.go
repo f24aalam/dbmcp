@@ -31,11 +31,12 @@ func AddNewConnection(cred *storage.Credential) {
 				Title("Select Database").
 				Options(
 					huh.NewOption("MySQL", "mysql"),
+					huh.NewOption("SQLite", "sqlite"),
 				).
 				Validate(huh.ValidateNotEmpty()).
 				Value(&dbType),
 			huh.NewInput().
-				Title("Enter connection string").
+				Title("Enter connection string/path").
 				Validate(huh.ValidateNotEmpty()).
 				Value(&dbConnUrl),
 		),

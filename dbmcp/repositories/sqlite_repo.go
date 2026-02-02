@@ -5,7 +5,9 @@ import (
 	"database/sql"
 )
 
-type sqliteRepository struct{}
+type sqliteRepository struct{
+	BaseRepository
+}
 
 func NewSQLiteRepository() TableRepository {
 	return &sqliteRepository{}

@@ -87,7 +87,7 @@ func GetTables(ctx context.Context, req *mcp.CallToolRequest, input ConnectionIn
 
 type DescribeTableOutput struct {
 	Columns    []repositories.Column `json:"columns"`
-	PrimaryKey string   `json:"primary_key"`
+	PrimaryKey string                `json:"primary_key"`
 }
 
 func DescribeTable(ctx context.Context, req *mcp.CallToolRequest, input TableInput) (
@@ -134,52 +134,11 @@ func RunSelectQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryIn
 		return nil, SelectQueryOutput{}, err
 	}
 
-	rows, err := conn.DB.QueryContext(ctx, strings.TrimSpace(input.Query))
-	if err != nil {
-		return nil, SelectQueryOutput{}, err
-	}
-	defer rows.Close()
-
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, SelectQueryOutput{}, err
-	}
-
-	var result []map[string]interface{}
-	for rows.Next() {
-		values := make([]interface{}, len(columns))
-		valuesPtr := make([]interface{}, len(columns))
-
-		for i := range columns {
-			valuesPtr[i] = &values[i]
-		}
-
-		err = rows.Scan(valuesPtr...)
-		if err != nil {
-			return nil, SelectQueryOutput{}, err
-		}
-
-		entry := make(map[string]interface{})
-		for i, col := range columns {
-			var v interface{}
-
-			val := values[i]
-			b, ok := val.([]byte)
-
-			if ok {
-				v = string(b)
-			} else {
-				v = val
-			}
-
-			entry[col] = v
-		}
-
-		result = append(result, entry)
-	}
+	repo := repositories.GetRepository(GetDBType())
+	rows, rowCount, err := repo.RunSelectQuery(ctx, conn.DB, query)
 
 	return nil, SelectQueryOutput{
-		Rows:     result,
-		RowCount: len(result),
+		Rows:     rows,
+		RowCount: rowCount,
 	}, nil
 }

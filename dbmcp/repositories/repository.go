@@ -18,4 +18,6 @@ type TableRepository interface {
 
 	GetTables(ctx context.Context, db *sql.DB) ([]string, error)
 	DescribeTable(ctx context.Context, db *sql.DB, tableName string) ([]Column, string, error)
+
+	RunSelectQuery(ctx context.Context, db *sql.DB, query string) ([]map[string]interface{}, int, error)
 }

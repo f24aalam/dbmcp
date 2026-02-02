@@ -5,7 +5,9 @@ import (
 	"database/sql"
 )
 
-type mysqlRepository struct{}
+type mysqlRepository struct{
+	BaseRepository
+}
 
 func NewMySQLRepository() TableRepository {
 	return &mysqlRepository{}

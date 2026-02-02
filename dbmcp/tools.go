@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
+	"github.com/f24aalam/godbmcp/dbmcp/repositories"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -38,14 +40,14 @@ func GetDatabaseInfo(ctx context.Context, req *mcp.CallToolRequest, input Connec
 		return nil, GetDatabaseInfoOutput{}, err
 	}
 
-	var dbName string
-	err = conn.DB.QueryRowContext(ctx, "SELECT DATABASE()").Scan(&dbName)
+	repo := repositories.GetRepository(GetDBType())
+
+	dbName, err := repo.GetDatabaseName(ctx, conn.DB)
 	if err != nil {
 		return nil, GetDatabaseInfoOutput{}, err
 	}
 
-	var dbVersion string
-	err = conn.DB.QueryRowContext(ctx, "SELECT VERSION()").Scan(&dbVersion)
+	dbVersion, err := repo.GetDatabaseVersion(ctx, conn.DB)
 	if err != nil {
 		return nil, GetDatabaseInfoOutput{}, err
 	}

@@ -75,22 +75,9 @@ func GetTables(ctx context.Context, req *mcp.CallToolRequest, input ConnectionIn
 		return nil, GetTablesOutput{}, err
 	}
 
-	rows, err := conn.DB.QueryContext(ctx, "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE()")
-	if err != nil {
-		return nil, GetTablesOutput{}, err
-	}
-	defer rows.Close()
+	repo := repositories.GetRepository(GetDBType())
 
-	var tables []string
-	for rows.Next() {
-		var tableName string
-		err := rows.Scan(&tableName)
-		if err != nil {
-			return nil, GetTablesOutput{}, err
-		}
-
-		tables = append(tables, tableName)
-	}
+	tables, err := repo.GetTables(ctx, conn.DB)
 
 	return nil, GetTablesOutput{
 		Tables:     tables,

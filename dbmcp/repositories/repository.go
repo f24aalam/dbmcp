@@ -15,4 +15,6 @@ type Column struct {
 type TableRepository interface {
 	GetDatabaseName(ctx context.Context, db *sql.DB) (string, error)
 	GetDatabaseVersion(ctx context.Context, db *sql.DB) (string, error)
+
+	GetTables(ctx context.Context, db *sql.DB) ([]string, error)
 }

@@ -85,15 +85,8 @@ func GetTables(ctx context.Context, req *mcp.CallToolRequest, input ConnectionIn
 	}, nil
 }
 
-type Column struct {
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	Nullable bool   `json:"nullable"`
-	Key      string `json:"key"`
-}
-
 type DescribeTableOutput struct {
-	Columns    []Column `json:"columns"`
+	Columns    []repositories.Column `json:"columns"`
 	PrimaryKey string   `json:"primary_key"`
 }
 
@@ -107,32 +100,12 @@ func DescribeTable(ctx context.Context, req *mcp.CallToolRequest, input TableInp
 		return nil, DescribeTableOutput{}, err
 	}
 
-	rows, err := conn.DB.QueryContext(ctx, "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", input.TableName)
+	repo := repositories.GetRepository(GetDBType())
+
+	columns, primaryKey, err := repo.DescribeTable(ctx, conn.DB, input.TableName)
+
 	if err != nil {
 		return nil, DescribeTableOutput{}, err
-	}
-	defer rows.Close()
-
-	var columns []Column
-	var primaryKey string
-
-	for rows.Next() {
-		var name, colType, isNullable, columnKey string
-		err := rows.Scan(&name, &colType, &isNullable, &columnKey)
-		if err != nil {
-			return nil, DescribeTableOutput{}, err
-		}
-
-		columns = append(columns, Column{
-			Name:     name,
-			Type:     colType,
-			Nullable: isNullable == "YES",
-			Key:      columnKey,
-		})
-
-		if columnKey == "PRI" {
-			primaryKey = name
-		}
 	}
 
 	return nil, DescribeTableOutput{

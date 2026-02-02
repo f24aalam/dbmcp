@@ -63,3 +63,47 @@ func (r *sqliteRepository) GetTables(ctx context.Context, db *sql.DB) ([]string,
 
 	return tables, nil
 }
+
+func (r *sqliteRepository) DescribeTable(ctx context.Context, db *sql.DB, tableName string) ([]Column, string, error) {
+	rows, err := db.QueryContext(
+		ctx,
+		"PRAGMA table_info(" + tableName + ")",
+	)
+	if err != nil {
+		return nil, "", err
+	}
+	defer rows.Close()
+
+	var columns []Column
+	var primaryKey string
+
+	for rows.Next() {
+		var (
+			cid        int
+			name       string
+			colType    string
+			notNull    int
+			defaultVal sql.NullString
+			pk         int
+		)
+
+		if err := rows.Scan(&cid, &name, &colType, &notNull, &defaultVal, &pk); err != nil {
+			return nil, "", err
+		}
+
+		col := Column{
+			Name:     name,
+			Type:     colType,
+			Nullable: notNull == 0,
+		}
+
+		if pk == 1 {
+			col.Key = "PRI"
+			primaryKey = name
+		}
+
+		columns = append(columns, col)
+	}
+
+	return columns, primaryKey, nil
+}

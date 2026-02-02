@@ -55,3 +55,35 @@ func (r *mysqlRepository) GetTables(ctx context.Context, db *sql.DB) ([]string, 
 
 	return tables, nil
 }
+
+func (r *mysqlRepository) DescribeTable(ctx context.Context, db *sql.DB, tableName string) ([]Column, string, error) {
+	rows, err := db.QueryContext(ctx, "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", tableName)
+	if err != nil {
+		return nil, "", err
+	}
+	defer rows.Close()
+
+	var columns []Column
+	var primaryKey string
+
+	for rows.Next() {
+		var name, colType, isNullable, columnKey string
+		err := rows.Scan(&name, &colType, &isNullable, &columnKey)
+		if err != nil {
+			return nil, "", err
+		}
+
+		columns = append(columns, Column{
+			Name:     name,
+			Type:     colType,
+			Nullable: isNullable == "YES",
+			Key:      columnKey,
+		})
+
+		if columnKey == "PRI" {
+			primaryKey = name
+		}
+	}
+
+	return columns, primaryKey, nil
+}

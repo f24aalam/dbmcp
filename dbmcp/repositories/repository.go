@@ -17,4 +17,5 @@ type TableRepository interface {
 	GetDatabaseVersion(ctx context.Context, db *sql.DB) (string, error)
 
 	GetTables(ctx context.Context, db *sql.DB) ([]string, error)
+	DescribeTable(ctx context.Context, db *sql.DB, tableName string) ([]Column, string, error)
 }

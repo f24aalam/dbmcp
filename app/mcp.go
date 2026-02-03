@@ -1,14 +1,26 @@
-package cli
+package app
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/f24aalam/godbmcp/dbmcp"
+	"github.com/f24aalam/godbmcp/storage"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-func StartServer() {
+func StartServer(connectionID string) error {
+	if connectionID == "" {
+		return fmt.Errorf("connection-id is required")
+	}
+
+	dbType, dbURL, err := storage.GetCredentialById(connectionID)
+	if err != nil {
+		return err
+	}
+
+	dbmcp.InitDBConfig(dbType, dbURL)
+
 	server := mcp.NewServer(&mcp.Implementation{Name: "greeter", Version: "v1.0.0"}, nil)
 
 	mcp.AddTool(server, &mcp.Tool{
@@ -31,7 +43,5 @@ func StartServer() {
 		Description: "Run a SELECT query to retrieve data from the database",
 	}, dbmcp.RunSelectQuery)
 
-	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
-		fmt.Println(err)
-	}
+	return server.Run(context.Background(), &mcp.StdioTransport{})
 }

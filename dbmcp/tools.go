@@ -2,23 +2,24 @@ package dbmcp
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
-	"github.com/f24aalam/godbmcp/database"
-	"github.com/f24aalam/godbmcp/storage"
+	"github.com/f24aalam/godbmcp/dbmcp/repositories"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 type ConnectionInput struct {
-	ConnectionID string `json:"connection_id" jsonschema:"the connection id to connect with the database"`
+	ConnectionID string `json:"connection_id,omitempty" jsonschema:"optional; database connection id. If omitted, the server default connection is used"`
 }
 
 type TableInput struct {
-	ConnectionID string `json:"connection_id" jsonschema:"the connection id to connect with the database"`
+	ConnectionID string `json:"connection_id,omitempty" jsonschema:"optional; database connection id. If omitted, the server default connection is used"`
 	TableName    string `json:"table_name" jsonschema:"the table name"`
 }
 
 type QueryInput struct {
-	ConnectionID string `json:"connection_id" jsonschema:"the connection id to connect with the database"`
+	ConnectionID string `json:"connection_id,omitempty" jsonschema:"optional; database connection id. If omitted, the server default connection is used"`
 	Query        string `json:"query" jsonschema:"the query to run"`
 }
 
@@ -34,37 +35,26 @@ func GetDatabaseInfo(ctx context.Context, req *mcp.CallToolRequest, input Connec
 	GetDatabaseInfoOutput,
 	error,
 ) {
-	dbType, dbUrl, err := storage.GetCredentialById(input.ConnectionID)
+	conn, err := GetDB()
 	if err != nil {
 		return nil, GetDatabaseInfoOutput{}, err
 	}
 
-	conn := &database.Connection{
-		Database:      dbType,
-		ConnectionUrl: dbUrl,
-	}
+	repo := repositories.GetRepository(GetDBType())
 
-	err = conn.Open()
-	if err != nil {
-		return nil, GetDatabaseInfoOutput{}, err
-	}
-	defer conn.Close()
-
-	var dbName string
-	err = conn.DB.QueryRow("SELECT DATABASE()").Scan(&dbName)
+	dbName, err := repo.GetDatabaseName(ctx, conn.DB)
 	if err != nil {
 		return nil, GetDatabaseInfoOutput{}, err
 	}
 
-	var dbVersion string
-	err = conn.DB.QueryRow("SELECT VERSION()").Scan(&dbVersion)
+	dbVersion, err := repo.GetDatabaseVersion(ctx, conn.DB)
 	if err != nil {
 		return nil, GetDatabaseInfoOutput{}, err
 	}
 
 	return nil, GetDatabaseInfoOutput{
 		DatabaseName:     dbName,
-		DatabaseVendor:   dbType,
+		DatabaseVendor:   GetDBType(),
 		DatabaseVersion:  dbVersion,
 		ConnectionStatus: "connected",
 	}, nil
@@ -80,38 +70,14 @@ func GetTables(ctx context.Context, req *mcp.CallToolRequest, input ConnectionIn
 	GetTablesOutput,
 	error,
 ) {
-	dbType, dbUrl, err := storage.GetCredentialById(input.ConnectionID)
+	conn, err := GetDB()
 	if err != nil {
 		return nil, GetTablesOutput{}, err
 	}
 
-	conn := &database.Connection{
-		Database:      dbType,
-		ConnectionUrl: dbUrl,
-	}
+	repo := repositories.GetRepository(GetDBType())
 
-	err = conn.Open()
-	if err != nil {
-		return nil, GetTablesOutput{}, err
-	}
-	defer conn.Close()
-
-	rows, err := conn.DB.Query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE()")
-	if err != nil {
-		return nil, GetTablesOutput{}, err
-	}
-	defer rows.Close()
-
-	var tables []string
-	for rows.Next() {
-		var tableName string
-		err := rows.Scan(&tableName)
-		if err != nil {
-			return nil, GetTablesOutput{}, err
-		}
-
-		tables = append(tables, tableName)
-	}
+	tables, err := repo.GetTables(ctx, conn.DB)
 
 	return nil, GetTablesOutput{
 		Tables:     tables,
@@ -119,16 +85,9 @@ func GetTables(ctx context.Context, req *mcp.CallToolRequest, input ConnectionIn
 	}, nil
 }
 
-type Column struct {
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	Nullable bool   `json:"nullable"`
-	Key      string `json:"key"`
-}
-
 type DescribeTableOutput struct {
-	Columns    []Column `json:"columns"`
-	PrimaryKey string   `json:"primary_key"`
+	Columns    []repositories.Column `json:"columns"`
+	PrimaryKey string                `json:"primary_key"`
 }
 
 func DescribeTable(ctx context.Context, req *mcp.CallToolRequest, input TableInput) (
@@ -136,48 +95,17 @@ func DescribeTable(ctx context.Context, req *mcp.CallToolRequest, input TableInp
 	DescribeTableOutput,
 	error,
 ) {
-	dbType, dbUrl, err := storage.GetCredentialById(input.ConnectionID)
+	conn, err := GetDB()
 	if err != nil {
 		return nil, DescribeTableOutput{}, err
 	}
 
-	conn := database.Connection{
-		Database:      dbType,
-		ConnectionUrl: dbUrl,
-	}
+	repo := repositories.GetRepository(GetDBType())
 
-	err = conn.Open()
+	columns, primaryKey, err := repo.DescribeTable(ctx, conn.DB, input.TableName)
+
 	if err != nil {
 		return nil, DescribeTableOutput{}, err
-	}
-	defer conn.Close()
-
-	rows, err := conn.DB.Query("SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", input.TableName)
-	if err != nil {
-		return nil, DescribeTableOutput{}, err
-	}
-	defer rows.Close()
-
-	var columns []Column
-	var primaryKey string
-
-	for rows.Next() {
-		var name, colType, isNullable, columnKey string
-		err := rows.Scan(&name, &colType, &isNullable, &columnKey)
-		if err != nil {
-			return nil, DescribeTableOutput{}, nil
-		}
-
-		columns = append(columns, Column{
-			Name:     name,
-			Type:     colType,
-			Nullable: isNullable == "YES",
-			Key:      columnKey,
-		})
-
-		if columnKey == "PRI" {
-			primaryKey = name
-		}
 	}
 
 	return nil, DescribeTableOutput{
@@ -196,67 +124,21 @@ func RunSelectQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryIn
 	SelectQueryOutput,
 	error,
 ) {
-	dbType, dbUrl, err := storage.GetCredentialById(input.ConnectionID)
+	query := strings.TrimSpace(strings.ToUpper(input.Query))
+	if !strings.HasPrefix(query, "SELECT") {
+		return nil, SelectQueryOutput{}, fmt.Errorf("only SELECT queries are allowed")
+	}
+
+	conn, err := GetDB()
 	if err != nil {
 		return nil, SelectQueryOutput{}, err
 	}
 
-	conn := database.Connection{
-		Database:      dbType,
-		ConnectionUrl: dbUrl,
-	}
-
-	err = conn.Open()
-	if err != nil {
-		return nil, SelectQueryOutput{}, err
-	}
-	defer conn.Close()
-
-	rows, err := conn.DB.Query(input.Query)
-	if err != nil {
-		return nil, SelectQueryOutput{}, err
-	}
-
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, SelectQueryOutput{}, err
-	}
-
-	var result []map[string]interface{}
-	for rows.Next() {
-		values := make([]interface{}, len(columns))
-		valuesPtr := make([]interface{}, len(columns))
-
-		for i := range columns {
-			valuesPtr[i] = &values[i]
-		}
-
-		err = rows.Scan(valuesPtr...)
-		if err != nil {
-			return nil, SelectQueryOutput{}, err
-		}
-
-		entry := make(map[string]interface{})
-		for i, col := range columns {
-			var v interface{}
-
-			val := values[i]
-			b, ok := val.([]byte)
-
-			if ok {
-				v = string(b)
-			} else {
-				v = val
-			}
-
-			entry[col] = v
-		}
-
-		result = append(result, entry)
-	}
+	repo := repositories.GetRepository(GetDBType())
+	rows, rowCount, err := repo.RunSelectQuery(ctx, conn.DB, query)
 
 	return nil, SelectQueryOutput{
-		Rows:     result,
-		RowCount: len(result),
+		Rows:     rows,
+		RowCount: rowCount,
 	}, nil
 }

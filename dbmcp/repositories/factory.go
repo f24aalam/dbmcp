@@ -6,6 +6,8 @@ func GetRepository(dbType string) TableRepository {
 		return NewSQLiteRepository()
 	case "mysql":
 		return NewMySQLRepository()
+	case "postgres":
+		return NewPostgresRepository()
 	default:
 		return NewMySQLRepository()
 	}

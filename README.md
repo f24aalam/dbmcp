@@ -33,6 +33,17 @@ irm https://raw.githubusercontent.com/f24aalam/dbmcp/master/install.ps1 | iex
 ```bash
 godbmcp add
 ```
+
+**MySQL example:**
+```
+user:password@tcp(localhost:3306)/mydb
+```
+
+**SQLite example:**
+```
+/home/user/data/mydb.sqlite
+```
+
 Follow the prompts to enter your database details (MySQL or SQLite).
 
 ### 2. List connections

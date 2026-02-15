@@ -27,7 +27,8 @@ echo "📦 Installing godbmcp ($OS/$ARCH)"
 echo "⬇️  $URL"
 
 mkdir -p "$INSTALL_DIR"
-curl -fsSL "$URL" -o "${INSTALL_DIR}/godbmcp"
+echo "Downloading..."
+curl -#L "$URL" -o "${INSTALL_DIR}/godbmcp"
 chmod +x "${INSTALL_DIR}/godbmcp"
 
 if [ -w "$FALLBACK_DIR" ] 2>/dev/null; then

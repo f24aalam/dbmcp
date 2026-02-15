@@ -37,7 +37,7 @@ godbmcp --help
 ### 🐧 Linux / 🍎 macOS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/f24aalam/dbmcp/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/f24aalam/dbmcp/master/install.sh | bash
 ```
 
 Then verify:

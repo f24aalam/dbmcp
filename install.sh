@@ -3,7 +3,8 @@ set -e
 
 REPO="f24aalam/dbmcp"
 VERSION="v0.1.0"
-INSTALL_DIR="/usr/local/bin"
+INSTALL_DIR="${HOME}/.local/bin"
+FALLBACK_DIR="/usr/local/bin"
 
 OS="$(uname | tr '[:upper:]' '[:lower:]')"
 ARCH="$(uname -m)"
@@ -25,9 +26,16 @@ URL="https://github.com/$REPO/releases/download/$VERSION/$BINARY"
 echo "📦 Installing godbmcp ($OS/$ARCH)"
 echo "⬇️  $URL"
 
-curl -fsSL "$URL" -o /tmp/godbmcp
-chmod +x /tmp/godbmcp
-sudo mv /tmp/godbmcp "$INSTALL_DIR/godbmcp"
+mkdir -p "$INSTALL_DIR"
+curl -fsSL "$URL" -o "${INSTALL_DIR}/godbmcp"
+chmod +x "${INSTALL_DIR}/godbmcp"
 
-echo "✅ Installed successfully"
+if [ -w "$FALLBACK_DIR" ] 2>/dev/null; then
+    mv "${INSTALL_DIR}/godbmcp" "${FALLBACK_DIR}/godbmcp"
+    echo "✅ Installed to ${FALLBACK_DIR}/godbmcp"
+else
+    echo "✅ Installed to ${INSTALL_DIR}/godbmcp"
+    echo "Add to PATH: export PATH=\"\$PATH:${INSTALL_DIR}\""
+fi
+
 echo "Run: godbmcp --help"

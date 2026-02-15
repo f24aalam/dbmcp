@@ -39,6 +39,11 @@ godbmcp add
 user:password@tcp(localhost:3306)/mydb
 ```
 
+**PostgreSQL example:**
+```
+postgres://user:password@localhost:5432/mydb
+```
+
 **SQLite example:**
 ```
 /home/user/data/mydb.sqlite
@@ -86,6 +91,7 @@ Add to your OpenCode MCP settings with the same command format.
 ## Supported Databases
 
 - MySQL
+- PostgreSQL
 - SQLite
 
 ## License

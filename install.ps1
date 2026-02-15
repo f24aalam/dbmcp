@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $Repo = "f24aalam/dbmcp"
-$Version = "v0.1.0"
+$Version = (Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest").tag_name
 $InstallDir = "$env:USERPROFILE\bin"
 
 $Arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") {

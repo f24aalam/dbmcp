@@ -31,6 +31,7 @@ func AddNewConnection(cred *storage.Credential) {
 				Title("Select Database").
 				Options(
 					huh.NewOption("MySQL", "mysql"),
+					huh.NewOption("PostgreSQL", "postgres"),
 					huh.NewOption("SQLite", "sqlite"),
 				).
 				Validate(huh.ValidateNotEmpty()).

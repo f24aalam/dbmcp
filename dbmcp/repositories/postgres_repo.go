@@ -52,7 +52,7 @@ func (r *postgresRepository) GetTables(ctx context.Context, db *sql.DB) ([]strin
 
 func (r *postgresRepository) DescribeTable(ctx context.Context, db *sql.DB, tableName string) ([]Column, string, error) {
 	rows, err := db.QueryContext(ctx, `
-		SELECT column_name, data_type, is_nullable, column_key
+		SELECT column_name, data_type, is_nullable
 		FROM information_schema.columns 
 		WHERE table_schema = 'public' AND table_name = $1
 	`, tableName)
@@ -62,11 +62,10 @@ func (r *postgresRepository) DescribeTable(ctx context.Context, db *sql.DB, tabl
 	defer rows.Close()
 
 	var columns []Column
-	var primaryKey string
 
 	for rows.Next() {
-		var name, colType, isNullable, columnKey string
-		err := rows.Scan(&name, &colType, &isNullable, &columnKey)
+		var name, colType, isNullable string
+		err := rows.Scan(&name, &colType, &isNullable)
 		if err != nil {
 			return nil, "", err
 		}
@@ -75,11 +74,27 @@ func (r *postgresRepository) DescribeTable(ctx context.Context, db *sql.DB, tabl
 			Name:     name,
 			Type:     colType,
 			Nullable: isNullable == "YES",
-			Key:      columnKey,
 		})
+	}
 
-		if columnKey == "PRI" {
-			primaryKey = name
+	var primaryKey string
+	err = db.QueryRowContext(ctx, `
+		SELECT kcu.column_name
+		FROM information_schema.table_constraints tc
+		JOIN information_schema.key_column_usage kcu 
+			ON tc.constraint_name = kcu.constraint_name
+			AND tc.table_schema = kcu.table_schema
+		WHERE tc.constraint_type = 'PRIMARY KEY'
+			AND tc.table_schema = 'public'
+			AND tc.table_name = $1
+	`, tableName).Scan(&primaryKey)
+
+	if primaryKey != "" {
+		for i := range columns {
+			if columns[i].Name == primaryKey {
+				columns[i].Key = "PRI"
+				break
+			}
 		}
 	}
 

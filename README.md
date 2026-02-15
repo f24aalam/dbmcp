@@ -1,147 +1,82 @@
-# dbmcp (godbmcp)
+# godbmcp
 
-`godbmcp` is a command-line tool to manage database connections and run an **MCP (Model Context Protocol) server** for databases.
+Database MCP server with easy credential management.
 
-It allows you to:
+## Why godbmcp?
 
-* Add and manage database connections
-* List configured databases
-* Start an MCP server backed by those connections
+Other database MCP tools require:
+- Cloning the entire repository
+- Node.js/npm installed
+- Setting database credentials in environment variables
 
----
+**godbmcp** makes it simple:
+- Prebuilt binary - no dependencies needed
+- Store credentials securely locally
+- Just run `godbmcp add` to add a connection
+- Copy the generated connection ID and use it in your MCP client
 
-## 🚀 Installation
+## Installation
 
-### 📦 Prebuilt binaries (Recommended)
-
-You **do not need Go installed**. Just run the installer for your platform.
-
----
-
-### 🪟 Windows (PowerShell)
-
-Run PowerShell **as your normal user**:
-
-```powershell
-iwr https://raw.githubusercontent.com/f24aalam/dbmcp/main/install.ps1 | iex
-```
-
-After installation, restart your terminal and verify:
-
-```powershell
-godbmcp --help
-```
-
----
-
-### 🐧 Linux / 🍎 macOS
-
+### Linux/macOS
 ```bash
 curl -fsSL https://raw.githubusercontent.com/f24aalam/dbmcp/master/install.sh | bash
 ```
 
-Then verify:
-
-```bash
-godbmcp --help
+### Windows (PowerShell)
+```powershell
+irm https://raw.githubusercontent.com/f24aalam/dbmcp/master/install.ps1 | iex
 ```
 
----
+## Quick Start
 
-### 📍 Installation Location
-
-| OS            | Path                             |
-| ------------- | -------------------------------- |
-| Windows       | `C:\Users\<you>\bin\godbmcp.exe` |
-| Linux / macOS | `/usr/local/bin/godbmcp`         |
-
----
-
-## 🧰 Usage
-
-```bash
-godbmcp [command]
-```
-
-### Available Commands
-
-| Command      | Description                   |
-| ------------ | ----------------------------- |
-| `add`        | Add a new database connection |
-| `list`       | List all saved connections    |
-| `mcp`        | Start the MCP server          |
-| `completion` | Generate shell autocompletion |
-| `help`       | Show help for any command     |
-
----
-
-### Example: Add a database connection
-
+### 1. Add a database connection
 ```bash
 godbmcp add
 ```
+Follow the prompts to enter your database details (MySQL or SQLite).
 
----
-
-### Example: List connections
-
+### 2. List connections
 ```bash
 godbmcp list
 ```
 
----
-
-### Example: Start MCP server
-
+### 3. Start MCP server
 ```bash
-godbmcp mcp
+godbmcp mcp --connection-id <CONNECTION_ID>
 ```
 
----
+## Usage in MCP Clients
 
-## 🧠 Shell Autocompletion (Optional)
-
-### Bash
-
-```bash
-godbmcp completion bash > /etc/bash_completion.d/godbmcp
+### Cursor
+Add to `~/.cursor/mcp.json`:
+```json
+{
+  "mcpServers": {
+    "godbmcp": {
+      "command": "godbmcp",
+      "args": ["mcp", "--connection-id", "<YOUR_CONNECTION_ID>"]
+    }
+  }
+}
 ```
 
-### Zsh
+### OpenCode
+Add to your OpenCode MCP settings with the same command format.
 
-```bash
-godbmcp completion zsh > "${fpath[1]}/_godbmcp"
-```
+## Commands
 
-Restart your shell to activate completions.
+| Command | Description |
+|---------|-------------|
+| `godbmcp add` | Add a new database connection |
+| `godbmcp list` | List all saved connections |
+| `godbmcp mcp` | Start the MCP server |
+| `godbmcp completion` | Generate shell autocompletion |
 
----
+## Supported Databases
 
-## 🛠️ Build from Source (Optional)
+- MySQL
+- SQLite
 
-### Requirements
+## License
 
-* Go 1.20+
-
-### Build
-
-```bash
-git clone https://github.com/f24aalam/dbmcp.git
-cd dbmcp
-go build -o godbmcp ./cmd/godbmcp
-```
-
----
-
-## 📄 License
-
-MIT License. See [LICENSE](./LICENSE) for details.
-
----
-
-## ✅ Status
-
-* ✔ Cross-platform binaries (Windows, Linux, macOS)
-* ✔ amd64 + arm64 supported
-* ✔ One-line install scripts
-* ✔ No runtime dependencies
+MIT

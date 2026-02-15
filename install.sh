@@ -2,7 +2,7 @@
 set -e
 
 REPO="f24aalam/dbmcp"
-VERSION="v0.1.0"
+VERSION=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
 INSTALL_DIR="${HOME}/.local/bin"
 FALLBACK_DIR="/usr/local/bin"
 

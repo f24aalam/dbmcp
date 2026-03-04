@@ -124,8 +124,9 @@ func RunSelectQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryIn
 	SelectQueryOutput,
 	error,
 ) {
-	query := strings.TrimSpace(strings.ToUpper(input.Query))
-	if !strings.HasPrefix(query, "SELECT") {
+	originalQuery := strings.TrimSpace(input.Query)
+	queryUpper := strings.ToUpper(originalQuery)
+	if !strings.HasPrefix(queryUpper, "SELECT") {
 		return nil, SelectQueryOutput{}, fmt.Errorf("only SELECT queries are allowed")
 	}
 
@@ -135,7 +136,11 @@ func RunSelectQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryIn
 	}
 
 	repo := repositories.GetRepository(GetDBType())
-	rows, rowCount, err := repo.RunSelectQuery(ctx, conn.DB, query)
+	rows, rowCount, err := repo.RunSelectQuery(ctx, conn.DB, originalQuery)
+
+	if err != nil {
+		return nil, SelectQueryOutput{}, err
+	}
 
 	return nil, SelectQueryOutput{
 		Rows:     rows,

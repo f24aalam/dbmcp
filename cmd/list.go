@@ -1,19 +1,18 @@
 /*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2026 Faizan Aalam <f24aalam@gmail.com>
 */
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/f24aalam/godbmcp/app"
+	"github.com/spf13/cobra"
 )
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all the connections",
-	Long: `List all the connections stored with label and connection id`,
+	Long:  `List all the connections stored with label and connection id`,
 	Run: func(cmd *cobra.Command, args []string) {
 		app.ListAllConnections()
 	},

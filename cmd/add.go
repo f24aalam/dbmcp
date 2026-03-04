@@ -1,19 +1,18 @@
 /*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2026 Faizan Aalam <f24aalam@gmail.com>
 */
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/f24aalam/godbmcp/app"
+	"github.com/spf13/cobra"
 )
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add a new connection",
-	Long: `Add a new connection to the dbmcp, this will generate a unique connection id which can be used with mcp server`,
+	Long:  `Add a new connection to the dbmcp, this will generate a unique connection id which can be used with mcp server`,
 	Run: func(cmd *cobra.Command, args []string) {
 		app.AddNewConnection(nil)
 	},

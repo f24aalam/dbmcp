@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type BaseRepository struct {}
+type BaseRepository struct{}
 
 func (r *BaseRepository) RunSelectQuery(ctx context.Context, db *sql.DB, query string) ([]map[string]interface{}, int, error) {
 	rows, err := db.QueryContext(ctx, strings.TrimSpace(query))
@@ -20,7 +20,7 @@ func (r *BaseRepository) RunSelectQuery(ctx context.Context, db *sql.DB, query s
 		return nil, 0, err
 	}
 
-	var result []map[string]interface{}
+	result := make([]map[string]interface{}, 0)
 	for rows.Next() {
 		values := make([]interface{}, len(columns))
 		valuesPtr := make([]interface{}, len(columns))
@@ -51,6 +51,10 @@ func (r *BaseRepository) RunSelectQuery(ctx context.Context, db *sql.DB, query s
 		}
 
 		result = append(result, entry)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
 	}
 
 	return result, len(result), nil

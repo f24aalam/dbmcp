@@ -5,7 +5,7 @@ import (
 	"database/sql"
 )
 
-type sqliteRepository struct{
+type sqliteRepository struct {
 	BaseRepository
 }
 
@@ -69,7 +69,7 @@ func (r *sqliteRepository) GetTables(ctx context.Context, db *sql.DB) ([]string,
 func (r *sqliteRepository) DescribeTable(ctx context.Context, db *sql.DB, tableName string) ([]Column, string, error) {
 	rows, err := db.QueryContext(
 		ctx,
-		"PRAGMA table_info(" + tableName + ")",
+		"PRAGMA table_info("+tableName+")",
 	)
 	if err != nil {
 		return nil, "", err

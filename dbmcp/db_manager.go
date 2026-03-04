@@ -37,7 +37,7 @@ func GetDB() (*database.Connection, error) {
 	return dbConn, dbErr
 }
 
-func CloseDB() error  {
+func CloseDB() error {
 	if dbConn != nil {
 		return dbConn.Close()
 	}

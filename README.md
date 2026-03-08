@@ -27,6 +27,22 @@ curl -fsSL https://raw.githubusercontent.com/f24aalam/dbmcp/master/install.sh | 
 irm https://raw.githubusercontent.com/f24aalam/dbmcp/master/install.ps1 | iex
 ```
 
+### Uninstallation
+
+#### Linux/macOS
+To remove `dbmcp`, delete the binary from your local bin directory:
+```bash
+rm ~/.local/bin/dbmcp
+# or if installed in /usr/local/bin
+sudo rm /usr/local/bin/dbmcp
+```
+
+#### Windows
+To remove `dbmcp`, delete the executable from your installation folder:
+```powershell
+Remove-Item "$HOME\bin\dbmcp.exe"
+```
+
 ## Quick Start
 
 ### 1. Add a database connection

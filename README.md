@@ -1,18 +1,18 @@
-# godbmcp
+# dbmcp
 
 Database MCP server with easy credential management.
 
-## Why godbmcp?
+## Why dbmcp?
 
 Other database MCP tools require:
 - Cloning the entire repository
 - Node.js/npm installed
 - Setting database credentials in environment variables
 
-**godbmcp** makes it simple:
+**dbmcp** makes it simple:
 - Prebuilt binary - no dependencies needed
 - Store credentials securely locally
-- Just run `godbmcp add` to add a connection
+- Just run `dbmcp add` to add a connection
 - Copy the generated connection ID and use it in your MCP client
 
 ## Installation
@@ -27,11 +27,27 @@ curl -fsSL https://raw.githubusercontent.com/f24aalam/dbmcp/master/install.sh | 
 irm https://raw.githubusercontent.com/f24aalam/dbmcp/master/install.ps1 | iex
 ```
 
+### Uninstallation
+
+#### Linux/macOS
+To remove `dbmcp`, delete the binary from your local bin directory:
+```bash
+rm ~/.local/bin/dbmcp
+# or if installed in /usr/local/bin
+sudo rm /usr/local/bin/dbmcp
+```
+
+#### Windows
+To remove `dbmcp`, delete the executable from your installation folder:
+```powershell
+Remove-Item "$HOME\bin\dbmcp.exe"
+```
+
 ## Quick Start
 
 ### 1. Add a database connection
 ```bash
-godbmcp add
+dbmcp add
 ```
 
 **MySQL example:**
@@ -53,12 +69,12 @@ Follow the prompts to enter your database details (MySQL or SQLite).
 
 ### 2. List connections
 ```bash
-godbmcp list
+dbmcp list
 ```
 
 ### 3. Start MCP server
 ```bash
-godbmcp mcp --connection-id <CONNECTION_ID>
+dbmcp mcp --connection-id <CONNECTION_ID>
 ```
 
 ## Usage in MCP Clients
@@ -68,8 +84,8 @@ Add to `~/.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "godbmcp": {
-      "command": "godbmcp",
+    "dbmcp": {
+      "command": "dbmcp",
       "args": ["mcp", "--connection-id", "<YOUR_CONNECTION_ID>"]
     }
   }
@@ -83,10 +99,10 @@ Add to your OpenCode MCP settings with the same command format.
 
 | Command | Description |
 |---------|-------------|
-| `godbmcp add` | Add a new database connection |
-| `godbmcp list` | List all saved connections |
-| `godbmcp mcp` | Start the MCP server |
-| `godbmcp completion` | Generate shell autocompletion |
+| `dbmcp add` | Add a new database connection |
+| `dbmcp list` | List all saved connections |
+| `dbmcp mcp` | Start the MCP server |
+| `dbmcp completion` | Generate shell autocompletion |
 
 ## Supported Databases
 

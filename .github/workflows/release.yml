@@ -1,4 +1,4 @@
-name: Release godbmcp
+name: Release dbmcp
 
 on:
   push:
@@ -27,16 +27,16 @@ jobs:
       - name: Build binaries
         run: |
           mkdir -p dist
-          BIN="godbmcp"
+          BIN="dbmcp"
 
           if [ "${{ matrix.goos }}" = "windows" ]; then
-            BIN="godbmcp.exe"
+            BIN="dbmcp.exe"
           fi
 
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
-          go build -o dist/$BIN ./cmd/godbmcp
+          go build -o dist/$BIN ./cmd/dbmcp
 
-          mv dist/$BIN dist/godbmcp_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
+          mv dist/$BIN dist/dbmcp_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

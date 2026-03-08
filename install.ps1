@@ -10,14 +10,14 @@ $Arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") {
     "amd64"
 }
 
-$Binary = "godbmcp_windows_$Arch.exe"
+$Binary = "dbmcp_windows_$Arch.exe"
 $Url = "https://github.com/$Repo/releases/download/$Version/$Binary"
 
-Write-Host "📦 Installing godbmcp"
+Write-Host "📦 Installing dbmcp"
 Write-Host "⬇️  $Url"
 
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-Invoke-WebRequest -Uri $Url -OutFile "$InstallDir\godbmcp.exe"
+Invoke-WebRequest -Uri $Url -OutFile "$InstallDir\dbmcp.exe"
 
 if ($env:PATH -notlike "*$InstallDir*") {
     [Environment]::SetEnvironmentVariable(
@@ -28,4 +28,4 @@ if ($env:PATH -notlike "*$InstallDir*") {
 }
 
 Write-Host "✅ Installed successfully"
-Write-Host "Restart terminal and run: godbmcp --help"
+Write-Host "Restart terminal and run: dbmcp --help"

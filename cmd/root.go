@@ -11,9 +11,9 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "godbmcp",
+	Use:   "dbmcp",
 	Short: "Database MCP server and CLI",
-	Long:  "godbmcp manages database connections and runs an MCP server for databases.",
+	Long:  "dbmcp manages database connections and runs an MCP server for databases.",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

@@ -20,23 +20,23 @@ case "$ARCH" in
   *) echo "Unsupported arch: $ARCH"; exit 1 ;;
 esac
 
-BINARY="godbmcp_${OS}_${ARCH}"
+BINARY="dbmcp_${OS}_${ARCH}"
 URL="https://github.com/$REPO/releases/download/$VERSION/$BINARY"
 
-echo "📦 Installing godbmcp ($OS/$ARCH)"
+echo "📦 Installing dbmcp ($OS/$ARCH)"
 echo "⬇️  $URL"
 
 mkdir -p "$INSTALL_DIR"
 echo "Downloading..."
-curl -#L "$URL" -o "${INSTALL_DIR}/godbmcp"
-chmod +x "${INSTALL_DIR}/godbmcp"
+curl -#L "$URL" -o "${INSTALL_DIR}/dbmcp"
+chmod +x "${INSTALL_DIR}/dbmcp"
 
 if [ -w "$FALLBACK_DIR" ] 2>/dev/null; then
-    mv "${INSTALL_DIR}/godbmcp" "${FALLBACK_DIR}/godbmcp"
-    echo "✅ Installed to ${FALLBACK_DIR}/godbmcp"
+    mv "${INSTALL_DIR}/dbmcp" "${FALLBACK_DIR}/dbmcp"
+    echo "✅ Installed to ${FALLBACK_DIR}/dbmcp"
 else
-    echo "✅ Installed to ${INSTALL_DIR}/godbmcp"
+    echo "✅ Installed to ${INSTALL_DIR}/dbmcp"
     echo "Add to PATH: export PATH=\"\$PATH:${INSTALL_DIR}\""
 fi
 
-echo "Run: godbmcp --help"
+echo "Run: dbmcp --help"

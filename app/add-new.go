@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/huh"
-	"github.com/f24aalam/godbmcp/database"
-	"github.com/f24aalam/godbmcp/storage"
+	"github.com/f24aalam/dbmcp/database"
+	"github.com/f24aalam/dbmcp/storage"
 )
 
 func AddNewConnection(cred *storage.Credential) {

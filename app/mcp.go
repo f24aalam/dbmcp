@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/f24aalam/godbmcp/dbmcp"
-	"github.com/f24aalam/godbmcp/storage"
+	"github.com/f24aalam/dbmcp/dbmcp"
+	"github.com/f24aalam/dbmcp/storage"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

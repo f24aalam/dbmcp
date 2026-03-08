@@ -1,4 +1,4 @@
-module github.com/f24aalam/godbmcp
+module github.com/f24aalam/dbmcp
 
 go 1.24.0
 

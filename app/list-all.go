@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/f24aalam/godbmcp/storage"
+	"github.com/f24aalam/dbmcp/storage"
 )
 
 var docStyle = lipgloss.NewStyle().Margin(1, 2)

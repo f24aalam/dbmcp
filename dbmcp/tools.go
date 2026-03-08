@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/f24aalam/godbmcp/dbmcp/repositories"
+	"github.com/f24aalam/dbmcp/dbmcp/repositories"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

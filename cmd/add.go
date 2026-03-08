@@ -4,7 +4,7 @@ Copyright © 2026 Faizan Aalam <f24aalam@gmail.com>
 package cmd
 
 import (
-	"github.com/f24aalam/godbmcp/app"
+	"github.com/f24aalam/dbmcp/app"
 	"github.com/spf13/cobra"
 )
 

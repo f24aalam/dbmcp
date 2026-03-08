@@ -3,7 +3,7 @@ package dbmcp
 import (
 	"sync"
 
-	"github.com/f24aalam/godbmcp/database"
+	"github.com/f24aalam/dbmcp/database"
 )
 
 var (

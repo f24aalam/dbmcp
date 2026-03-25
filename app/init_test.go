@@ -42,6 +42,22 @@ func TestBuildConnectionURL(t *testing.T) {
 			},
 			want: "test.db",
 		},
+		{
+			name: "postgres_url_prisma_schema",
+			in: initInput{
+				DBType: "postgres",
+				URL:    "postgresql://vision_user:vision_pass@localhost:5432/vision?schema=public",
+			},
+			want: "postgresql://vision_user:vision_pass@localhost:5432/vision",
+		},
+		{
+			name: "mysql_url_uri",
+			in: initInput{
+				DBType: "mysql",
+				URL:    "mysql://root:pass@127.0.0.1:3306/wares",
+			},
+			want: "root:pass@tcp(127.0.0.1:3306)/wares",
+		},
 	}
 
 	for _, tc := range tests {

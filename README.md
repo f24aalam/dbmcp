@@ -57,9 +57,12 @@ dbmcp init
 You’ll see the **dbmcp** banner, then a step-by-step wizard:
 
 1. **How to connect** — use a **saved connection**, **scan the project** for DB hints, or **add a new** URL/path.
-2. **Review** connection details, confirm **ping and save** (new connections are saved; **existing** only pings).
-3. Optionally **install MCP config** for agents in **this repo**. If you choose **No**, the flow ends there (no agent picker).
-4. If **Yes**, pick agents; configs are **merged** into existing files without wiping other servers.
+2. **Review** connection details, then **dbmcp** opens a real connection (**ping**). If that fails, you’ll see an error and nothing is saved.
+3. **Save** — for new or scanned connections, you’re asked **“Save this connection to dbmcp?”** (default **Yes**). Choose **No** to verify only; the flow ends without MCP install (no stored connection ID). **Existing** connections are only validated, not re-saved.
+4. Optionally **install MCP config** for agents in **this repo**. If you choose **No**, the flow ends there (no agent picker).
+5. If **Yes**, pick agents; configs are **merged** into existing files without wiping other servers.
+
+**URL normalization (init / scan / pasted URLs in init):** **`mysql://...`** values are converted to the DSN form the Go MySQL driver expects. **PostgreSQL** URLs from Prisma and similar tools often include **`?schema=public`** (or `connection_limit`, `pool_timeout`); those keys are **removed** before connecting, because they are not valid **lib/pq** connection options. The database name in the path is unchanged.
 
 Then use **`dbmcp list`** for connection IDs, or open the files **init** created (see table below).
 
@@ -71,7 +74,7 @@ Then use **`dbmcp list`** for connection IDs, or open the files **init** created
 
 | | |
 |--|--|
-| **What it does** | Connects this directory to a database (discover, reuse, or enter), validates with a ping, saves when needed, and optionally adds **project-local** MCP entries for coding agents. |
+| **What it does** | Connects this directory to a database (discover, reuse, or enter), **pings** to validate, optionally **saves**, then optionally adds **project-local** MCP entries for coding agents. |
 | **Where to run** | Repository / app root — paths like `.cursor/mcp.json` are written relative to `cwd`. |
 
 **Connection paths**
@@ -132,6 +135,8 @@ dbmcp add
 | MySQL | `user:password@tcp(localhost:3306)/mydb` |
 | PostgreSQL | `postgres://user:password@localhost:5432/mydb` |
 | SQLite | `/home/user/data/mydb.sqlite` |
+
+Prisma-style Postgres URLs such as `.../mydb?schema=public` work in **`dbmcp init`** (and any path that uses the same URL resolver) because **`schema=`** is stripped before connect. The plain **`dbmcp add`** form currently saves the string you type as-is—use a URL without ORM-only query params there, or run **init** instead.
 
 ### 2. List connections
 

@@ -77,7 +77,7 @@ func installSingle(path string, target Target, connectionID string) error {
 func buildJSONServerEntry(target Target, connectionID string) map[string]any {
 	entry := map[string]any{
 		"type":    target.ServerType,
-		"command": "godbmcp",
+		"command": "dbmcp",
 		"args":    []string{"mcp", "--connection-id", connectionID},
 	}
 
@@ -95,7 +95,7 @@ func buildJSONServerEntry(target Target, connectionID string) map[string]any {
 func installSingleTOML(path string, connectionID string) error {
 	block := strings.TrimSpace(fmt.Sprintf(`
 [mcp_servers.dbmcp]
-command = "godbmcp"
+command = "dbmcp"
 args = ["mcp", "--connection-id", "%s"]
 `, connectionID)) + "\n"
 

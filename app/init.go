@@ -94,9 +94,8 @@ func InitProject() {
 		return
 	}
 
-	saveRes, err := runStepflow(
+	_, err = runStepflow(
 		stepflow.Info("review", "Connection details").Body(buildConnectionReviewDetails(selected)),
-		stepflow.Confirm("save", "Continue with ping and save?"),
 	)
 
 	if err != nil {
@@ -106,11 +105,6 @@ func InitProject() {
 		}
 
 		showErrorFlow("Initialization failed", err.Error())
-		return
-	}
-
-	if !saveRes.Bool("save") {
-		showErrorFlow("Initialization cancelled", "No changes were made.")
 		return
 	}
 
@@ -129,6 +123,24 @@ func InitProject() {
 	if strings.HasPrefix(selected.Source, "existing:") {
 		connectionID = strings.TrimPrefix(selected.Source, "existing:")
 	} else {
+		saveRes, saveFlowErr := runStepflow(
+			stepflow.Confirm("save", "Save this connection to dbmcp?").Default("Yes"),
+		)
+		if saveFlowErr != nil {
+			if errors.Is(saveFlowErr, stepflow.ErrCancelled) {
+				showErrorFlow("Initialization cancelled", "No changes were made.")
+				return
+			}
+
+			showErrorFlow("Initialization failed", saveFlowErr.Error())
+			return
+		}
+
+		if !saveRes.Bool("save") {
+			showSuccessFlow("Init completed", "Connection verified.\nNot saved to dbmcp.\nMCP installation skipped.")
+			return
+		}
+
 		id, saveErr := storage.SaveCredential(nil, selected.Name, selected.DBType, connURL)
 		if saveErr != nil {
 			showErrorFlow("Failed to save connection", saveErr.Error())
@@ -414,6 +426,20 @@ func buildConnectionURL(in initInput) (string, error) {
 	if strings.TrimSpace(in.URL) != "" {
 		if in.DBType == "sqlite" && !strings.Contains(in.URL, "://") {
 			return in.URL, nil
+		}
+
+		u, err := url.Parse(in.URL)
+		if err == nil && u.Scheme != "" {
+			switch in.DBType {
+			case "mysql":
+				if strings.EqualFold(u.Scheme, "mysql") {
+					return canonicalMySQLDSNFromURL(in.URL)
+				}
+			case "postgres":
+				if u.Scheme == "postgres" || u.Scheme == "postgresql" {
+					return sanitizePostgresURLForPQ(in.URL)
+				}
+			}
 		}
 
 		if _, err := url.Parse(in.URL); err == nil {

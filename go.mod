@@ -7,7 +7,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/huh v0.8.0
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/f24aalam/stepflow v0.0.0-20260328140406-13c9047098b6
+	github.com/f24aalam/stepflow v0.0.0-20260328142918-bf52af25e40f
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/lib/pq v1.11.2
 	github.com/modelcontextprotocol/go-sdk v1.1.0

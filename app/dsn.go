@@ -38,6 +38,11 @@ func sanitizePostgresURLForPQ(raw string) (string, error) {
 		}
 	}
 
+	if q.Get("sslmode") == "" {
+		q.Set("sslmode", "disable")
+		changed = true
+	}
+
 	if !changed {
 		return raw, nil
 	}

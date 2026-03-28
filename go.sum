@@ -51,8 +51,8 @@ github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkp
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f h1:Y/CXytFA4m6baUTXGLOoWe4PQhGxaX0KpnayAqC48p4=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f/go.mod h1:vw97MGsxSvLiUE2X8qFplwetxpGLQrlU1Q9AUEIzCaM=
-github.com/f24aalam/stepflow v0.0.0-20260328140406-13c9047098b6 h1:CvQbgYxM7yTGUEVsfU/D9W4WtSaUZY1+ThoPFsHZnI0=
-github.com/f24aalam/stepflow v0.0.0-20260328140406-13c9047098b6/go.mod h1:Sd+j90w1zGclagosUJQzudRpKMeS9SjDgku8KTCB3Zc=
+github.com/f24aalam/stepflow v0.0.0-20260328142918-bf52af25e40f h1:l3001ibS+KgRcSF8948x5jQ+2zAi13F7Z3mmhlnpFuI=
+github.com/f24aalam/stepflow v0.0.0-20260328142918-bf52af25e40f/go.mod h1:Sd+j90w1zGclagosUJQzudRpKMeS9SjDgku8KTCB3Zc=
 github.com/go-sql-driver/mysql v1.9.3 h1:U/N249h2WzJ3Ukj8SowVFjdtZKfu9vlLZxjPXV1aweo=
 github.com/go-sql-driver/mysql v1.9.3/go.mod h1:qn46aNg1333BRMNU69Lq93t8du/dwxI64Gl8i5p1WMU=
 github.com/godbus/dbus/v5 v5.1.0 h1:4KLkAxT3aOY8Li4FRJe/KvhoNFFxo0m6fNuFUO8QJUk=

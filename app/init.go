@@ -154,31 +154,18 @@ func InitProject() {
 		agentItems = append(agentItems, stepflow.Item(t.ID, t.Name+" · "+t.Path))
 	}
 
-	// Confirm MCP install in its own wizard so declining "No" does not show agent selection.
-	mcpRes, err := runStepflow(
-		stepflow.Confirm("install_mcp", "Install MCP config for coding agents in this project?").Default("No"),
-	)
-
-	if err != nil {
-		if errors.Is(err, stepflow.ErrCancelled) {
-			showSuccessFlow("Init completed", "Connection validated.\nMCP installation skipped.")
-			return
-		}
-
-		showErrorFlow("Initialization failed", err.Error())
-		return
-	}
-
-	if !mcpRes.Bool("install_mcp") {
-		showSuccessFlow("Init completed", "Connection validated.\nMCP installation skipped.")
-		return
-	}
-
 	agentsRes, err := runStepflow(
 		stepflow.List("agents", "Select agents to configure (space toggles, enter confirms)").
 			Items(agentItems...).
 			MultiSelect(true).
 			VisibleRows(8),
+		stepflow.List("mcp_scope", "Where should the MCP config be installed?").
+			Items(
+				stepflow.Item("project", "Project level (current directory)"),
+				stepflow.Item("global", "Global level (system config)"),
+			).
+			MultiSelect(false).
+			VisibleRows(2),
 	)
 
 	if err != nil {
@@ -197,7 +184,8 @@ func InitProject() {
 		return
 	}
 
-	results := mcpinstall.InstallForAgents(root, chosen, connectionID)
+	isGlobal := agentsRes.Get("mcp_scope") == "global"
+	results := mcpinstall.InstallForAgents(root, chosen, connectionID, isGlobal)
 	var lines []string
 	lines = append(lines, "Connection validated.")
 	if !strings.HasPrefix(selected.Source, "existing:") {
@@ -435,6 +423,9 @@ func buildConnectionURL(in initInput) (string, error) {
 		}
 
 		if _, err := url.Parse(in.URL); err == nil {
+			if in.DBType == "postgres" && (strings.HasPrefix(in.URL, "postgres://") || strings.HasPrefix(in.URL, "postgresql://")) {
+				return sanitizePostgresURLForPQ(in.URL)
+			}
 			return in.URL, nil
 		}
 	}

@@ -16,7 +16,7 @@ type InstallResult struct {
 	Err      error
 }
 
-func InstallForAgents(root string, targetIDs []string, connectionID string) []InstallResult {
+func InstallForAgents(root string, targetIDs []string, connectionID string, isGlobal bool) []InstallResult {
 	out := make([]InstallResult, 0, len(targetIDs))
 	for _, id := range targetIDs {
 		t, ok := GetTarget(id)
@@ -25,11 +25,24 @@ func InstallForAgents(root string, targetIDs []string, connectionID string) []In
 			continue
 		}
 
-		path := filepath.Join(root, t.Path)
+		path := ""
+		displayPath := ""
+		if isGlobal {
+			if t.GlobalPath == "" {
+				out = append(out, InstallResult{TargetID: id, Err: fmt.Errorf("global install not supported for this agent")})
+				continue
+			}
+			path = t.GlobalPath
+			displayPath = t.GlobalPath
+		} else {
+			path = filepath.Join(root, t.Path)
+			displayPath = t.Path
+		}
+
 		err := installSingle(path, t, connectionID)
 		out = append(out, InstallResult{
 			TargetID: id,
-			Path:     t.Path,
+			Path:     displayPath,
 			Written:  err == nil,
 			Err:      err,
 		})

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/f24aalam/dbmcp/database"
@@ -227,137 +226,130 @@ func InitProject() {
 }
 
 func runInitSourceWizard(root string, creds []storage.Credential) (initInput, error) {
-	modeItems := []stepflow.ListItem{
-		stepflow.Item("existing", "Use existing connections"),
-		stepflow.Item("scan", "Scan this project for database envs"),
-		stepflow.Item("new", "Add new connection"),
-	}
+	var candidates []projectscan.Candidate
 
 	res, err := runStepflow(
 		stepflow.List("init_mode", "How do you want to initialize dbmcp?").
-			Items(modeItems...).
+			Items(
+				stepflow.Item("existing", "Use existing connections"),
+				stepflow.Item("scan", "Scan this project for database envs"),
+				stepflow.Item("new", "Add new connection"),
+			).
 			MultiSelect(false).
-			VisibleRows(5),
+			VisibleRows(5).
+			WithNext(func(r stepflow.Result) []stepflow.Step {
+				mode := r.Get("init_mode")
+				switch mode {
+				case "existing":
+					existingItems := []stepflow.ListItem{}
+					for _, c := range creds {
+						label := fmt.Sprintf("%s (%s) · %s", c.Name, c.Database, c.ID)
+						existingItems = append(existingItems, stepflow.Item(label, "existing connection"))
+					}
+					if len(creds) == 0 {
+						return []stepflow.Step{
+							stepflow.Info("no_existing", "No existing connections found.").
+								Body("Please use scan or add a new connection."),
+						}
+					}
+					return []stepflow.Step{
+						stepflow.List("existing_pick", "Select an existing connection").
+							Items(existingItems...).
+							MultiSelect(false).
+							VisibleRows(8),
+					}
+				case "scan":
+					return []stepflow.Step{
+						stepflow.Load("scanning", "Scanning project...").
+							Run(func(status chan<- string) (string, error) {
+								status <- "searching for config files..."
+								res, err := projectscan.ScanProject(root)
+								if err != nil {
+									return "", err
+								}
+								candidates = res.Candidates
+								return fmt.Sprintf("found %d candidates", len(candidates)), nil
+							}).
+							WithNext(func(r stepflow.Result) []stepflow.Step {
+								if len(candidates) == 0 {
+									return append([]stepflow.Step{
+										stepflow.Info("scan_empty", "No database configurations found.").
+											Body("Switching to manual entry."),
+									}, newConnectionSteps()...)
+								}
+
+								scanItems := []stepflow.ListItem{
+									stepflow.Item("manual", "Enter connection manually"),
+								}
+								for _, c := range candidates {
+									label := candidateLabel(c)
+									meta := fmt.Sprintf("[%s] score %d", c.Parser, c.Confidence)
+									scanItems = append(scanItems, stepflow.Item(label, meta))
+								}
+
+								return []stepflow.Step{
+									stepflow.List("scan_pick", "Select discovered database config").
+										Items(scanItems...).
+										MultiSelect(false).
+										VisibleRows(8).
+										WithNext(func(r stepflow.Result) []stepflow.Step {
+											if r.Get("scan_pick") == "manual" {
+												return newConnectionSteps()
+											}
+											return nil
+										}),
+								}
+							}),
+					}
+				case "new":
+					return newConnectionSteps()
+				}
+				return nil
+			}),
 	)
+
 	if err != nil {
 		return initInput{}, err
 	}
 
-	mode := strings.TrimSpace(res.Get("init_mode"))
-	switch mode {
-	case "new":
-		return runNewConnectionWizard()
-	case "existing":
-		existingItems := []stepflow.ListItem{}
-		labelToID := map[string]string{}
-
-		for i, c := range creds {
-			_ = i
+	// Process results
+	if mode := res.Get("init_mode"); mode == "existing" {
+		choice := res.Get("existing_pick")
+		for _, c := range creds {
 			label := fmt.Sprintf("%s (%s) · %s", c.Name, c.Database, c.ID)
-			meta := "existing connection"
-			labelToID[label] = c.ID
-			existingItems = append(existingItems, stepflow.Item(label, meta))
-		}
-
-		existingRes, existingErr := runStepflow(
-			stepflow.List("existing_pick", "Select an existing connection").
-				Items(existingItems...).
-				MultiSelect(false).
-				VisibleRows(8),
-		)
-		if existingErr != nil {
-			return initInput{}, existingErr
-		}
-
-		choice := strings.TrimSpace(existingRes.Get("existing_pick"))
-		if len(creds) == 0 {
-			return initInput{DBType: "mysql", Port: "3306"}, nil
-		}
-
-		id, ok := labelToID[choice]
-		if !ok {
-			return initInput{}, fmt.Errorf("invalid existing connection selection")
-		}
-
-		for _, cred := range creds {
-			if cred.ID == id {
-				return existingCredentialToInput(cred), nil
+			if label == choice {
+				return existingCredentialToInput(c), nil
 			}
 		}
-
 		return initInput{}, fmt.Errorf("selected connection not found")
-	default:
-		scanResult, scanErr := projectscan.ScanProject(root)
-		if scanErr != nil {
-			return initInput{}, scanErr
+	} else if mode == "scan" && res.Get("scan_pick") != "" && res.Get("scan_pick") != "manual" {
+		choice := res.Get("scan_pick")
+		for _, c := range candidates {
+			if candidateLabel(c) == choice {
+				return candidateToInput(c), nil
+			}
 		}
-
-		candidates := scanResult.Candidates
-		if len(candidates) == 0 {
-			return runNewConnectionWizard()
-		}
-
-		scanItems := []stepflow.ListItem{
-			stepflow.Item("manual", "Enter connection manually"),
-		}
-
-		for i, c := range candidates {
-			label := strconv.Itoa(i)
-			meta := fmt.Sprintf("%s — %s [%s] score %d", candidateSummary(c), c.SourceFile, c.Parser, c.Confidence)
-			scanItems = append(scanItems, stepflow.Item(label, meta))
-		}
-
-		scanRes, scanRunErr := runStepflow(
-			stepflow.List("scan_pick", "Select discovered database config").
-				Items(scanItems...).
-				MultiSelect(false).
-				VisibleRows(8),
-		)
-
-		if scanRunErr != nil {
-			return initInput{}, scanRunErr
-		}
-
-		choice := strings.TrimSpace(scanRes.Get("scan_pick"))
-		if choice == "manual" {
-			return runNewConnectionWizard()
-		}
-
-		idx, convErr := strconv.Atoi(choice)
-		if convErr != nil || idx < 0 || idx >= len(candidates) {
-			return initInput{}, fmt.Errorf("invalid scanned connection selection")
-		}
-
-		return candidateToInput(candidates[idx]), nil
+		return initInput{}, fmt.Errorf("selected scanned connection not found")
 	}
+
+	// Manual or Scan->Manual
+	return initInput{
+		Name:   strings.TrimSpace(res.Get("name")),
+		DBType: strings.TrimSpace(res.Get("db_type")),
+		URL:    strings.TrimSpace(res.Get("url")),
+		Source: "manual",
+	}, nil
 }
 
-func runNewConnectionWizard() (initInput, error) {
-	res, err := runStepflow(
+func newConnectionSteps() []stepflow.Step {
+	return []stepflow.Step{
 		stepflow.Text("name", "Connection name"),
 		stepflow.List("db_type", "Database type").
 			Items(stepflow.Item("mysql"), stepflow.Item("postgres"), stepflow.Item("sqlite")).
 			MultiSelect(false).
 			VisibleRows(4),
 		stepflow.Text("url", "Database URL / path"),
-	)
-
-	if err != nil {
-		return initInput{}, err
 	}
-
-	in := initInput{
-		Name:   strings.TrimSpace(res.Get("name")),
-		DBType: strings.TrimSpace(res.Get("db_type")),
-		URL:    strings.TrimSpace(res.Get("url")),
-		Source: "manual",
-	}
-
-	if in.DBType == "sqlite" {
-		in.SQLitePath = in.URL
-	}
-
-	return in, nil
 }
 
 func splitCommaAnswers(s string) []string {
@@ -495,6 +487,10 @@ func candidateSummary(c projectscan.Candidate) string {
 	}
 
 	return fmt.Sprintf("%s %s:%s/%s", c.DBType, c.Host, c.Port, c.Database)
+}
+
+func candidateLabel(c projectscan.Candidate) string {
+	return fmt.Sprintf("%s · %s", candidateSummary(c), c.SourceFile)
 }
 
 func defaultConnectionName(in initInput) string {
